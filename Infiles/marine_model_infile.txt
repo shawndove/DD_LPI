@@ -1,0 +1,7 @@
+FileName	Group	Weighting	WeightingB
+m_Aves_model_pops.txt	1	0.0827966606	0.250000				
+m_Mammalia_model_pops.txt	1	0.0141219102	0.250000
+m_Herps_model_pops.txt	1	0.0008157872	0.250000
+m_Fish_model_pops.txt	1	0.9022656420	0.250000
+
+
