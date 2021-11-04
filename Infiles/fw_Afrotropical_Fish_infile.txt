@@ -1,0 +1,2 @@
+"FileName"	"Group"	"Weighting"
+"Infiles/fw_Afrotropical_Fish_pops.txt"	1	1
