@@ -122,3 +122,33 @@ test_specpop <- test %>%
   select(Class, T_realm, FW_realm, M_realm, n_pops, n_spec, m_obs, m_popspec) %>% # remove all extra columns
   distinct() %>% # remove duplicate populations
   ungroup() # remove grouping
+
+LPI_Terr_Afrotropical_Herps <- LPI_full[(LPI_full$Class=="Reptilia" | 
+                                         LPI_full$Class=="Amphibia") &
+                                         LPI_full$T_realm=="Afrotropical", ]
+
+LPI_FW_Afrotropical_Herps <- LPI_full[(LPI_full$Class=="Reptilia" | 
+                                       LPI_full$Class=="Amphibia") &
+                                       LPI_full$FW_realm=="Afrotropical", ]
+
+LPI_Terr_IndoPacific_Herps <- LPI_full[(LPI_full$Class=="Reptilia" | 
+                                        LPI_full$Class=="Amphibia") &
+                                       (LPI_full$T_realm=="Indo-Malayan" |
+                                        LPI_full$T_realm=="Oceania" |
+                                        LPI_full$T_realm=="Australasia"), ]
+
+LPI_FW_IndoPacific_Herps <- LPI_full[(LPI_full$Class=="Reptilia" | 
+                                      LPI_full$Class=="Amphibia") &
+                                     (LPI_full$FW_realm=="Indo-Malayan" |
+                                      LPI_full$FW_realm=="Oceania" |
+                                      LPI_full$FW_realm=="Australasia"), ]
+
+jpeg(file="Plots/Herps_Indo_and_Afro_obs_per_year.jpeg", height=768, width=1024, units="px")
+par(mfrow=c(2,2))
+LPIyeardata(LPI_Terr_Afrotropical_Herps, first_year=1970, plot_title="Terrestrial Afrotropical Herps")
+LPIyeardata(LPI_FW_Afrotropical_Herps, first_year=1970, plot_title="Freshwater Afrotropical Herps")
+LPIyeardata(LPI_Terr_IndoPacific_Herps, first_year=1970, plot_title="Terrestrial IndoPacific Herps")
+LPIyeardata(LPI_FW_IndoPacific_Herps, first_year=1970, plot_title="Freshwater IndoPacific Herps")
+dev.off()
+
+View(LPI_Terr_Afrotropical_Herps)
