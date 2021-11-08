@@ -1,7 +1,6 @@
 # libraries ----
 
 library(rlpi)
-library(plyr)
 library(dplyr)
 library(mgcv)
 library(matrixStats)
@@ -145,16 +144,17 @@ Weightingsr_list <- c(0.189738, 0.292168, 0.116431, 0.321132, 0.061683, NA,
 
 # only public data
 LPI_full <- read.csv(file="Data/LPR2020data_public.csv", sep=",", stringsAsFactors=FALSE)
+LPI_test <- read_excel("Data/LPR2020data_public.csv")
 
 # all data, including private
-LPI_full <- read.csv(file="Data/LPD_output_20201116.csv", sep=",", stringsAsFactors=FALSE)
+LPI_full2 <- read.csv(file="Data/LPD_output_20201116.csv", sep=",", stringsAsFactors=FALSE)
 # fix ID column name
 colnames(LPI_full)[1] <- "ID"
 # remove everything added after May 2016
-LPI_full <- LPI_full[LPI_full$ID < 18330,]
-LPI_full <- LPI_full[LPI_full$Confidential==0,]
+#LPI_full <- LPI_full[LPI_full$ID < 18330,]
+#LPI_full <- LPI_full[LPI_full$Confidential==0,]
 # remove everything added after March 3, 2015
-LPI_full <- LPI_full[LPI_full$ID < 17527,]
+#LPI_full <- LPI_full[LPI_full$ID < 17527,]
 
 # remove X from years in column names
 colnames(LPI_full) <- gsub("X", "", colnames(LPI_full))
@@ -176,7 +176,7 @@ LPI_trimmed <- LPI_full[,which(colnames(LPI_full) %in% (firstyear:endyear))]
 LPI_trimmed <- as.data.frame(sapply(LPI_trimmed, as.numeric))
 
 # create a population ID column by assigning each population a separate ID based on its row number
-LPI_trimmed$PopID <- as.integer(rownames(LPI_trimmed))
+LPI_trimmed$PopID <- LPI_trimmed$ID
 
 # create a species ID column by assigning each unique species a separate ID number
 LPI_trimmed$SpecID <- match(LPI_full$Binomial, unique(LPI_full$Binomial))
@@ -196,189 +196,175 @@ LPI_trimmed$MRID <- m_realm_IDs[LPI_full$M_realm]
 # create a taxonomic group ID column by assigning systems separate ID numbers according to LPI groupings
 LPI_trimmed$SysID <- sys_IDs[LPI_full$System]
 
-LPI_culled <- cull_fn(LPI_trimmed, 2, 2, c2)
-
 pop_list <- list()
 # select populations to form each group index
 for (i in 1:length(tax_list)) {
   
-  temp <- LPI_culled$PopID[which(LPI_culled$SysID==sys_list[i] & 
-                                   LPI_culled$GrpID==tax_list[i] & 
-                                   (LPI_culled$TRID==realm_list[i] | 
-                                      LPI_culled$FWRID==realm_list[i] | 
-                                      LPI_culled$MRID==realm_list[i]))]
+  temp <- LPI_trimmed$PopID[which(LPI_trimmed$SysID==sys_list[i] & 
+                                   LPI_trimmed$GrpID==tax_list[i] & 
+                                   (LPI_trimmed$TRID==realm_list[i] | 
+                                      LPI_trimmed$FWRID==realm_list[i] | 
+                                      LPI_trimmed$MRID==realm_list[i]))]
   
   pop_list[[i]] <- temp
   
 }
 
-T_Afrotropical_Aves <- LPI_culled$PopID %in% pop_list[[1]]
-T_Afrotropical_Mammalia <- LPI_culled$PopID %in% pop_list[[2]]
-T_Afrotropical_Herps <- LPI_culled$PopID %in% pop_list[[3]]
+T_Afrotropical_Aves <- LPI_trimmed$PopID %in% pop_list[[1]]
+T_Afrotropical_Mammalia <- LPI_trimmed$PopID %in% pop_list[[2]]
+T_Afrotropical_Herps <- LPI_trimmed$PopID %in% pop_list[[3]]
 
-T_IndoPacific_Aves <- LPI_culled$PopID %in% pop_list[[5]]
-T_IndoPacific_Mammalia <- LPI_culled$PopID %in% pop_list[[6]]
-T_IndoPacific_Herps <- LPI_culled$PopID %in% pop_list[[7]]
+T_IndoPacific_Aves <- LPI_trimmed$PopID %in% pop_list[[5]]
+T_IndoPacific_Mammalia <- LPI_trimmed$PopID %in% pop_list[[6]]
+T_IndoPacific_Herps <- LPI_trimmed$PopID %in% pop_list[[7]]
 
-T_Palearctic_Aves <- LPI_culled$PopID %in% pop_list[[9]]
-T_Palearctic_Mammalia <- LPI_culled$PopID %in% pop_list[[10]]
-T_Palearctic_Herps <- LPI_culled$PopID %in% pop_list[[11]]
+T_Palearctic_Aves <- LPI_trimmed$PopID %in% pop_list[[9]]
+T_Palearctic_Mammalia <- LPI_trimmed$PopID %in% pop_list[[10]]
+T_Palearctic_Herps <- LPI_trimmed$PopID %in% pop_list[[11]]
 
-T_Neotropical_Aves <- LPI_culled$PopID %in% pop_list[[13]]
-T_Neotropical_Mammalia <- LPI_culled$PopID %in% pop_list[[14]]
-T_Neotropical_Herps <- LPI_culled$PopID %in% pop_list[[15]]
+T_Neotropical_Aves <- LPI_trimmed$PopID %in% pop_list[[13]]
+T_Neotropical_Mammalia <- LPI_trimmed$PopID %in% pop_list[[14]]
+T_Neotropical_Herps <- LPI_trimmed$PopID %in% pop_list[[15]]
 
-T_Nearctic_Aves <- LPI_culled$PopID %in% pop_list[[17]]
-T_Nearctic_Mammalia <- LPI_culled$PopID %in% pop_list[[18]]
-T_Nearctic_Herps <- LPI_culled$PopID %in% pop_list[[19]]
+T_Nearctic_Aves <- LPI_trimmed$PopID %in% pop_list[[17]]
+T_Nearctic_Mammalia <- LPI_trimmed$PopID %in% pop_list[[18]]
+T_Nearctic_Herps <- LPI_trimmed$PopID %in% pop_list[[19]]
 
-T_Antarctic_Aves <- LPI_culled$PopID %in% pop_list[[21]]
-T_Antarctic_Mammalia <- LPI_culled$PopID %in% pop_list[[22]]
+T_Antarctic_Aves <- LPI_trimmed$PopID %in% pop_list[[21]]
+T_Antarctic_Mammalia <- LPI_trimmed$PopID %in% pop_list[[22]]
 
-fw_Afrotropical_Aves <- LPI_culled$PopID %in% pop_list[[25]]
-fw_Afrotropical_Mammalia <- LPI_culled$PopID %in% pop_list[[26]]
-fw_Afrotropical_Herps <- LPI_culled$PopID %in% pop_list[[27]]
-fw_Afrotropical_Fish <- LPI_culled$PopID %in% pop_list[[28]]
+fw_Afrotropical_Aves <- LPI_trimmed$PopID %in% pop_list[[25]]
+fw_Afrotropical_Mammalia <- LPI_trimmed$PopID %in% pop_list[[26]]
+fw_Afrotropical_Herps <- LPI_trimmed$PopID %in% pop_list[[27]]
+fw_Afrotropical_Fish <- LPI_trimmed$PopID %in% pop_list[[28]]
 
-fw_IndoPacific_Aves <- LPI_culled$PopID %in% pop_list[[29]]
-fw_IndoPacific_Mammalia <- LPI_culled$PopID %in% pop_list[[30]]
-fw_IndoPacific_Herps <- LPI_culled$PopID %in% pop_list[[31]]
-fw_IndoPacific_Fish <- LPI_culled$PopID %in% pop_list[[32]]
+fw_IndoPacific_Aves <- LPI_trimmed$PopID %in% pop_list[[29]]
+fw_IndoPacific_Mammalia <- LPI_trimmed$PopID %in% pop_list[[30]]
+fw_IndoPacific_Herps <- LPI_trimmed$PopID %in% pop_list[[31]]
+fw_IndoPacific_Fish <- LPI_trimmed$PopID %in% pop_list[[32]]
 
-fw_Palearctic_Aves <- LPI_culled$PopID %in% pop_list[[33]]
-fw_Palearctic_Mammalia <- LPI_culled$PopID %in% pop_list[[34]]
-fw_Palearctic_Herps <- LPI_culled$PopID %in% pop_list[[35]]
-fw_Palearctic_Fish <- LPI_culled$PopID %in% pop_list[[36]]
+fw_Palearctic_Aves <- LPI_trimmed$PopID %in% pop_list[[33]]
+fw_Palearctic_Mammalia <- LPI_trimmed$PopID %in% pop_list[[34]]
+fw_Palearctic_Herps <- LPI_trimmed$PopID %in% pop_list[[35]]
+fw_Palearctic_Fish <- LPI_trimmed$PopID %in% pop_list[[36]]
 
-fw_Neotropical_Aves <- LPI_culled$PopID %in% pop_list[[37]]
-fw_Neotropical_Mammalia <- LPI_culled$PopID %in% pop_list[[38]]
-fw_Neotropical_Herps <- LPI_culled$PopID %in% pop_list[[39]]
-fw_Neotropical_Fish <- LPI_culled$PopID %in% pop_list[[40]]
+fw_Neotropical_Aves <- LPI_trimmed$PopID %in% pop_list[[37]]
+fw_Neotropical_Mammalia <- LPI_trimmed$PopID %in% pop_list[[38]]
+fw_Neotropical_Herps <- LPI_trimmed$PopID %in% pop_list[[39]]
+fw_Neotropical_Fish <- LPI_trimmed$PopID %in% pop_list[[40]]
 
-fw_Nearctic_Aves <- LPI_culled$PopID %in% pop_list[[41]]
-fw_Nearctic_Mammalia <- LPI_culled$PopID %in% pop_list[[42]]
-fw_Nearctic_Herps <- LPI_culled$PopID %in% pop_list[[43]]
-fw_Nearctic_Fish <- LPI_culled$PopID %in% pop_list[[44]]
+fw_Nearctic_Aves <- LPI_trimmed$PopID %in% pop_list[[41]]
+fw_Nearctic_Mammalia <- LPI_trimmed$PopID %in% pop_list[[42]]
+fw_Nearctic_Herps <- LPI_trimmed$PopID %in% pop_list[[43]]
+fw_Nearctic_Fish <- LPI_trimmed$PopID %in% pop_list[[44]]
 
-m_AtNoTemp_Aves <- LPI_culled$PopID %in% pop_list[[49]]
-m_AtNoTemp_Mammalia <- LPI_culled$PopID %in% pop_list[[50]]
-m_AtNoTemp_Herps <- LPI_culled$PopID %in% pop_list[[51]]
-m_AtNoTemp_Fish <- LPI_culled$PopID %in% pop_list[[52]]
+m_AtNoTemp_Aves <- LPI_trimmed$PopID %in% pop_list[[49]]
+m_AtNoTemp_Mammalia <- LPI_trimmed$PopID %in% pop_list[[50]]
+m_AtNoTemp_Herps <- LPI_trimmed$PopID %in% pop_list[[51]]
+m_AtNoTemp_Fish <- LPI_trimmed$PopID %in% pop_list[[52]]
 
-m_AtTrSub_Aves <- LPI_culled$PopID %in% pop_list[[53]]
-m_AtTrSub_Mammalia <- LPI_culled$PopID %in% pop_list[[54]]
-m_AtTrSub_Herps <- LPI_culled$PopID %in% pop_list[[55]]
-m_AtTrSub_Fish <- LPI_culled$PopID %in% pop_list[[56]]
+m_AtTrSub_Aves <- LPI_trimmed$PopID %in% pop_list[[53]]
+m_AtTrSub_Mammalia <- LPI_trimmed$PopID %in% pop_list[[54]]
+m_AtTrSub_Herps <- LPI_trimmed$PopID %in% pop_list[[55]]
+m_AtTrSub_Fish <- LPI_trimmed$PopID %in% pop_list[[56]]
 
-m_Arctic_Aves <- LPI_culled$PopID %in% pop_list[[57]]
-m_Arctic_Mammalia <- LPI_culled$PopID %in% pop_list[[58]]
-m_Arctic_Fish <- LPI_culled$PopID %in% pop_list[[60]]
+m_Arctic_Aves <- LPI_trimmed$PopID %in% pop_list[[57]]
+m_Arctic_Mammalia <- LPI_trimmed$PopID %in% pop_list[[58]]
+m_Arctic_Fish <- LPI_trimmed$PopID %in% pop_list[[60]]
 
-m_SoTeAnt_Aves <- LPI_culled$PopID %in% pop_list[[61]]
-m_SoTeAnt_Mammalia <- LPI_culled$PopID %in% pop_list[[62]]
-m_SoTeAnt_Fish <- LPI_culled$PopID %in% pop_list[[64]]
+m_SoTeAnt_Aves <- LPI_trimmed$PopID %in% pop_list[[61]]
+m_SoTeAnt_Mammalia <- LPI_trimmed$PopID %in% pop_list[[62]]
+m_SoTeAnt_Fish <- LPI_trimmed$PopID %in% pop_list[[64]]
 
-m_TroSubIndo_Aves <- LPI_culled$PopID %in% pop_list[[65]]
-m_TroSubIndo_Mammalia <- LPI_culled$PopID %in% pop_list[[66]]
-m_TroSubIndo_Herps <- LPI_culled$PopID %in% pop_list[[67]]
-m_TroSubIndo_Fish <- LPI_culled$PopID %in% pop_list[[68]]
+m_TroSubIndo_Aves <- LPI_trimmed$PopID %in% pop_list[[65]]
+m_TroSubIndo_Mammalia <- LPI_trimmed$PopID %in% pop_list[[66]]
+m_TroSubIndo_Herps <- LPI_trimmed$PopID %in% pop_list[[67]]
+m_TroSubIndo_Fish <- LPI_trimmed$PopID %in% pop_list[[68]]
 
-m_PaNoTemp_Aves <- LPI_culled$PopID %in% pop_list[[69]]
-m_PaNoTemp_Mammalia <- LPI_culled$PopID %in% pop_list[[70]]
-m_PaNoTemp_Herps <- LPI_culled$PopID %in% pop_list[[71]]
-m_PaNoTemp_Fish <- LPI_culled$PopID %in% pop_list[[72]]
+m_PaNoTemp_Aves <- LPI_trimmed$PopID %in% pop_list[[69]]
+m_PaNoTemp_Mammalia <- LPI_trimmed$PopID %in% pop_list[[70]]
+m_PaNoTemp_Herps <- LPI_trimmed$PopID %in% pop_list[[71]]
+m_PaNoTemp_Fish <- LPI_trimmed$PopID %in% pop_list[[72]]
 
-# only public data
-LPI_full <- read.csv(file="Data/LPR2020data_public.csv", sep=",", stringsAsFactors=FALSE)
+# add X back to years in column names (to make create_infile work properly)
+colnames(LPI_full)[65:134] <- paste("X", colnames(LPI_full)[65:134], sep="")
 
-# all data, including private
-LPI_full <- read.csv(file="Data/LPD_output_20201116.csv", sep=",", stringsAsFactors=FALSE)
+# create infiles
+T_Afrotropical_Aves_infile <- create_infile(LPI_full, index_vector=T_Afrotropical_Aves, name="Infiles/T_Afrotropical_Aves", end_col_name = "X2019")
+T_Afrotropical_Mammalia_infile <- create_infile(LPI_full, index_vector=T_Afrotropical_Mammalia, name="Infiles/T_Afrotropical_Mammalia", end_col_name = "X2019")
+T_Afrotropical_Herps_infile <- create_infile(LPI_full, index_vector=T_Afrotropical_Herps, name="Infiles/T_Afrotropical_Herps", end_col_name = "X2019")
 
-# fix ID column name
-colnames(LPI_full)[1] <- "ID"
+T_IndoPacific_Aves_infile <- create_infile(LPI_full, index_vector=T_IndoPacific_Aves, name="Infiles/T_IndoPacific_Aves", end_col_name = "X2019")
+T_IndoPacific_Mammalia_infile <- create_infile(LPI_full, index_vector=T_IndoPacific_Mammalia, name="Infiles/T_IndoPacific_Mammalia", end_col_name = "X2019")
+T_IndoPacific_Herps_infile <- create_infile(LPI_full, index_vector=T_IndoPacific_Herps, name="Infiles/T_IndoPacific_Herps", end_col_name = "X2019")
 
-# remove everything added after May 2016
-LPI_full <- LPI_full[LPI_full$ID < 18330,]
-LPI_full <- LPI_full[LPI_full$Confidential==0,]
-# remove everything added after March 3 2015
-LPI_full <- LPI_full[LPI_full$ID < 17527,]
+T_Palearctic_Aves_infile <- create_infile(LPI_full, index_vector=T_Palearctic_Aves, name="Infiles/T_Palearctic_Aves", end_col_name = "X2019")
+T_Palearctic_Mammalia_infile <- create_infile(LPI_full, index_vector=T_Palearctic_Mammalia, name="Infiles/T_Palearctic_Mammalia", end_col_name = "X2019")
+T_Palearctic_Herps_infile <- create_infile(LPI_full, index_vector=T_Palearctic_Herps, name="Infiles/T_Palearctic_Herps", end_col_name = "X2019")
 
+T_Neotropical_Aves_infile <- create_infile(LPI_full, index_vector=T_Neotropical_Aves, name="Infiles/T_Neotropical_Aves", end_col_name = "X2019")
+T_Neotropical_Mammalia_infile <- create_infile(LPI_full, index_vector=T_Neotropical_Mammalia, name="Infiles/T_Neotropical_Mammalia", end_col_name = "X2019")
+T_Neotropical_Herps_infile <- create_infile(LPI_full, index_vector=T_Neotropical_Herps, name="Infiles/T_Neotropical_Herps", end_col_name = "X2019")
 
-T_Afrotropical_Aves_infile <- create_infile(LPI_full, index_vector=T_Afrotropical_Aves, name="Infiles/T_Afrotropical_Aves", end_col_name = "X2015")
-T_Afrotropical_Mammalia_infile <- create_infile(LPI_full, index_vector=T_Afrotropical_Mammalia, name="Infiles/T_Afrotropical_Mammalia", end_col_name = "X2015")
-T_Afrotropical_Herps_infile <- create_infile(LPI_full, index_vector=T_Afrotropical_Herps, name="Infiles/T_Afrotropical_Herps", end_col_name = "X2015")
+T_Nearctic_Aves_infile <- create_infile(LPI_full, index_vector=T_Nearctic_Aves, name="Infiles/T_Nearctic_Aves", end_col_name = "X2019")
+T_Nearctic_Mammalia_infile <- create_infile(LPI_full, index_vector=T_Nearctic_Mammalia, name="Infiles/T_Nearctic_Mammalia", end_col_name = "X2019")
+T_Nearctic_Herps_infile <- create_infile(LPI_full, index_vector=T_Nearctic_Herps, name="Infiles/T_Nearctic_Herps", end_col_name = "X2019")
 
-T_IndoPacific_Aves_infile <- create_infile(LPI_full, index_vector=T_IndoPacific_Aves, name="Infiles/T_IndoPacific_Aves", end_col_name = "X2015")
-T_IndoPacific_Mammalia_infile <- create_infile(LPI_full, index_vector=T_IndoPacific_Mammalia, name="Infiles/T_IndoPacific_Mammalia", end_col_name = "X2015")
-T_IndoPacific_Herps_infile <- create_infile(LPI_full, index_vector=T_IndoPacific_Herps, name="Infiles/T_IndoPacific_Herps", end_col_name = "X2015")
+T_Antarctic_Aves_infile <- create_infile(LPI_full, index_vector=T_Antarctic_Aves, name="T_Antarctic_Aves", end_col_name = "X2019")
+T_Antarctic_Mammalia_infile <- create_infile(LPI_full, index_vector=T_Antarctic_Mammalia, name="T_Antarctic_Mammalia", end_col_name = "X2019")
 
-T_Palearctic_Aves_infile <- create_infile(LPI_full, index_vector=T_Palearctic_Aves, name="Infiles/T_Palearctic_Aves", end_col_name = "X2015")
-T_Palearctic_Mammalia_infile <- create_infile(LPI_full, index_vector=T_Palearctic_Mammalia, name="Infiles/T_Palearctic_Mammalia", end_col_name = "X2015")
-T_Palearctic_Herps_infile <- create_infile(LPI_full, index_vector=T_Palearctic_Herps, name="Infiles/T_Palearctic_Herps", end_col_name = "X2015")
+fw_Afrotropical_Aves_infile <- create_infile(LPI_full, index_vector=fw_Afrotropical_Aves, name="Infiles/fw_Afrotropical_Aves", end_col_name = "X2019")
+fw_Afrotropical_Mammalia_infile <- create_infile(LPI_full, index_vector=fw_Afrotropical_Mammalia, name="Infiles/fw_Afrotropical_Mammalia", end_col_name = "X2019")
+fw_Afrotropical_Herps_infile <- create_infile(LPI_full, index_vector=fw_Afrotropical_Herps, name="Infiles/fw_Afrotropical_Herps", end_col_name = "X2019")
+fw_Afrotropical_Fish_infile <- create_infile(LPI_full, index_vector=fw_Afrotropical_Fish, name="Infiles/fw_Afrotropical_Fish", end_col_name = "X2019")
 
-T_Neotropical_Aves_infile <- create_infile(LPI_full, index_vector=T_Neotropical_Aves, name="Infiles/T_Neotropical_Aves", end_col_name = "X2015")
-T_Neotropical_Mammalia_infile <- create_infile(LPI_full, index_vector=T_Neotropical_Mammalia, name="Infiles/T_Neotropical_Mammalia", end_col_name = "X2015")
-T_Neotropical_Herps_infile <- create_infile(LPI_full, index_vector=T_Neotropical_Herps, name="Infiles/T_Neotropical_Herps", end_col_name = "X2015")
+fw_IndoPacific_Aves_infile <- create_infile(LPI_full, index_vector=fw_IndoPacific_Aves, name="Infiles/fw_IndoPacific_Aves", end_col_name = "X2019")
+fw_IndoPacific_Mammalia_infile <- create_infile(LPI_full, index_vector=fw_IndoPacific_Mammalia, name="Infiles/fw_IndoPacific_Mammalia", end_col_name = "X2019")
+fw_IndoPacific_Herps_infile <- create_infile(LPI_full, index_vector=fw_IndoPacific_Herps, name="Infiles/fw_IndoPacific_Herps", end_col_name = "X2019")
+fw_IndoPacific_Fish_infile <- create_infile(LPI_full, index_vector=fw_IndoPacific_Fish, name="Infiles/fw_IndoPacific_Fish", end_col_name = "X2019")
 
-T_Nearctic_Aves_infile <- create_infile(LPI_full, index_vector=T_Nearctic_Aves, name="Infiles/T_Nearctic_Aves", end_col_name = "X2015")
-T_Nearctic_Mammalia_infile <- create_infile(LPI_full, index_vector=T_Nearctic_Mammalia, name="Infiles/T_Nearctic_Mammalia", end_col_name = "X2015")
-T_Nearctic_Herps_infile <- create_infile(LPI_full, index_vector=T_Nearctic_Herps, name="Infiles/T_Nearctic_Herps", end_col_name = "X2015")
+fw_Palearctic_Aves_infile <- create_infile(LPI_full, index_vector=fw_Palearctic_Aves, name="Infiles/fw_Palearctic_Aves", end_col_name = "X2019")
+fw_Palearctic_Mammalia_infile <- create_infile(LPI_full, index_vector=fw_Palearctic_Mammalia, name="Infiles/fw_Palearctic_Mammalia", end_col_name = "X2019")
+fw_Palearctic_Herps_infile <- create_infile(LPI_full, index_vector=fw_Palearctic_Herps, name="Infiles/fw_Palearctic_Herps", end_col_name = "X2019")
+fw_Palearctic_Fish_infile <- create_infile(LPI_full, index_vector=fw_Palearctic_Fish, name="Infiles/fw_Palearctic_Fish", end_col_name = "X2019")
 
-T_Antarctic_Aves_infile <- create_infile(LPI_full, index_vector=T_Antarctic_Aves, name="T_Antarctic_Aves", end_col_name = "X2015")
-T_Antarctic_Mammalia_infile <- create_infile(LPI_full, index_vector=T_Antarctic_Mammalia, name="T_Antarctic_Mammalia", end_col_name = "X2015")
+fw_Neotropical_Aves_infile <- create_infile(LPI_full, index_vector=fw_Neotropical_Aves, name="Infiles/fw_Neotropical_Aves", end_col_name = "X2019")
+fw_Neotropical_Mammalia_infile <- create_infile(LPI_full, index_vector=fw_Neotropical_Mammalia, name="Infiles/fw_Neotropical_Mammalia", end_col_name = "X2019")
+fw_Neotropical_Herps_infile <- create_infile(LPI_full, index_vector=fw_Neotropical_Herps, name="Infiles/fw_Neotropical_Herps", end_col_name = "X2019")
+fw_Neotropical_Fish_infile <- create_infile(LPI_full, index_vector=fw_Neotropical_Fish, name="Infiles/fw_Neotropical_Fish", end_col_name = "X2019")
 
-fw_Afrotropical_Aves_infile <- create_infile(LPI_full, index_vector=fw_Afrotropical_Aves, name="Infiles/fw_Afrotropical_Aves", end_col_name = "X2015")
-fw_Afrotropical_Mammalia_infile <- create_infile(LPI_full, index_vector=fw_Afrotropical_Mammalia, name="Infiles/fw_Afrotropical_Mammalia", end_col_name = "X2015")
-fw_Afrotropical_Herps_infile <- create_infile(LPI_full, index_vector=fw_Afrotropical_Herps, name="Infiles/fw_Afrotropical_Herps", end_col_name = "X2015")
-fw_Afrotropical_Fish_infile <- create_infile(LPI_full, index_vector=fw_Afrotropical_Fish, name="Infiles/fw_Afrotropical_Fish", end_col_name = "X2015")
+fw_Nearctic_Aves_infile <- create_infile(LPI_full, index_vector=fw_Nearctic_Aves, name="Infiles/fw_Nearctic_Aves", end_col_name = "X2019")
+fw_Nearctic_Mammalia_infile <- create_infile(LPI_full, index_vector=fw_Nearctic_Mammalia, name="Infiles/fw_Nearctic_Mammalia", end_col_name = "X2019")
+fw_Nearctic_Herps_infile <- create_infile(LPI_full, index_vector=fw_Nearctic_Herps, name="Infiles/fw_Nearctic_Herps", end_col_name = "X2019")
+fw_Nearctic_Fish_infile <- create_infile(LPI_full, index_vector=fw_Nearctic_Fish, name="Infiles/fw_Nearctic_Fish", end_col_name = "X2019")
 
-fw_IndoPacific_Aves_infile <- create_infile(LPI_full, index_vector=fw_IndoPacific_Aves, name="Infiles/fw_IndoPacific_Aves", end_col_name = "X2015")
-fw_IndoPacific_Mammalia_infile <- create_infile(LPI_full, index_vector=fw_IndoPacific_Mammalia, name="Infiles/fw_IndoPacific_Mammalia", end_col_name = "X2015")
-fw_IndoPacific_Herps_infile <- create_infile(LPI_full, index_vector=fw_IndoPacific_Herps, name="Infiles/fw_IndoPacific_Herps", end_col_name = "X2015")
-fw_IndoPacific_Fish_infile <- create_infile(LPI_full, index_vector=fw_IndoPacific_Fish, name="Infiles/fw_IndoPacific_Fish", end_col_name = "X2015")
+m_AtNoTemp_Aves_infile <- create_infile(LPI_full, index_vector=m_AtNoTemp_Aves, name="Infiles/m_AtNoTemp_Aves", end_col_name = "X2019")
+m_AtNoTemp_Mammalia_infile <- create_infile(LPI_full, index_vector=m_AtNoTemp_Mammalia, name="Infiles/m_AtNoTemp_Mammalia", end_col_name = "X2019")
+m_AtNoTemp_Herps_infile <- create_infile(LPI_full, index_vector=m_AtNoTemp_Herps, name="Infiles/m_AtNoTemp_Herps", end_col_name = "X2019")
+m_AtNoTemp_Fish_infile <- create_infile(LPI_full, index_vector=m_AtNoTemp_Fish, name="Infiles/m_AtNoTemp_Fish", end_col_name = "X2019")
 
-fw_Palearctic_Aves_infile <- create_infile(LPI_full, index_vector=fw_Palearctic_Aves, name="Infiles/fw_Palearctic_Aves", end_col_name = "X2015")
-fw_Palearctic_Mammalia_infile <- create_infile(LPI_full, index_vector=fw_Palearctic_Mammalia, name="Infiles/fw_Palearctic_Mammalia", end_col_name = "X2015")
-fw_Palearctic_Herps_infile <- create_infile(LPI_full, index_vector=fw_Palearctic_Herps, name="Infiles/fw_Palearctic_Herps", end_col_name = "X2015")
-fw_Palearctic_Fish_infile <- create_infile(LPI_full, index_vector=fw_Palearctic_Fish, name="Infiles/fw_Palearctic_Fish", end_col_name = "X2015")
+m_AtTrSub_Aves_infile <- create_infile(LPI_full, index_vector=m_AtTrSub_Aves, name="Infiles/m_AtTrSub_Aves", end_col_name = "X2019")
+m_AtTrSub_Mammalia_infile <- create_infile(LPI_full, index_vector=m_AtTrSub_Mammalia, name="Infiles/m_AtTrSub_Mammalia", end_col_name = "X2019")
+m_AtTrSub_Herps_infile <- create_infile(LPI_full, index_vector=m_AtTrSub_Herps, name="Infiles/m_AtTrSub_Herps", end_col_name = "X2019")
+m_AtTrSub_Fish_infile <- create_infile(LPI_full, index_vector=m_AtTrSub_Fish, name="Infiles/m_AtTrSub_Fish", end_col_name = "X2019")
 
-fw_Neotropical_Aves_infile <- create_infile(LPI_full, index_vector=fw_Neotropical_Aves, name="Infiles/fw_Neotropical_Aves", end_col_name = "X2015")
-fw_Neotropical_Mammalia_infile <- create_infile(LPI_full, index_vector=fw_Neotropical_Mammalia, name="Infiles/fw_Neotropical_Mammalia", end_col_name = "X2015")
-fw_Neotropical_Herps_infile <- create_infile(LPI_full, index_vector=fw_Neotropical_Herps, name="Infiles/fw_Neotropical_Herps", end_col_name = "X2015")
-fw_Neotropical_Fish_infile <- create_infile(LPI_full, index_vector=fw_Neotropical_Fish, name="Infiles/fw_Neotropical_Fish", end_col_name = "X2015")
+m_Arctic_Aves_infile <- create_infile(LPI_full, index_vector=m_Arctic_Aves, name="Infiles/m_Arctic_Aves", end_col_name = "X2019")
+m_Arctic_Mammalia_infile <- create_infile(LPI_full, index_vector=m_Arctic_Mammalia, name="Infiles/m_Arctic_Mammalia", end_col_name = "X2019")
+m_Arctic_Fish_infile <- create_infile(LPI_full, index_vector=m_Arctic_Fish, name="Infiles/m_Arctic_Fish", end_col_name = "X2019")
 
-fw_Nearctic_Aves_infile <- create_infile(LPI_full, index_vector=fw_Nearctic_Aves, name="Infiles/fw_Nearctic_Aves", end_col_name = "X2015")
-fw_Nearctic_Mammalia_infile <- create_infile(LPI_full, index_vector=fw_Nearctic_Mammalia, name="Infiles/fw_Nearctic_Mammalia", end_col_name = "X2015")
-fw_Nearctic_Herps_infile <- create_infile(LPI_full, index_vector=fw_Nearctic_Herps, name="Infiles/fw_Nearctic_Herps", end_col_name = "X2015")
-fw_Nearctic_Fish_infile <- create_infile(LPI_full, index_vector=fw_Nearctic_Fish, name="Infiles/fw_Nearctic_Fish", end_col_name = "X2015")
+m_SoTeAnt_Aves_infile <- create_infile(LPI_full, index_vector=m_SoTeAnt_Aves, name="Infiles/m_SoTeAnt_Aves", end_col_name = "X2019")
+m_SoTeAnt_Mammalia_infile <- create_infile(LPI_full, index_vector=m_SoTeAnt_Mammalia, name="Infiles/m_SoTeAnt_Mammalia", end_col_name = "X2019")
+m_SoTeAnt_Fish_infile <- create_infile(LPI_full, index_vector=m_SoTeAnt_Fish, name="Infiles/m_SoTeAnt_Fish", end_col_name = "X2019")
 
-m_AtNoTemp_Aves_infile <- create_infile(LPI_full, index_vector=m_AtNoTemp_Aves, name="Infiles/m_AtNoTemp_Aves", end_col_name = "X2015")
-m_AtNoTemp_Mammalia_infile <- create_infile(LPI_full, index_vector=m_AtNoTemp_Mammalia, name="Infiles/m_AtNoTemp_Mammalia", end_col_name = "X2015")
-m_AtNoTemp_Herps_infile <- create_infile(LPI_full, index_vector=m_AtNoTemp_Herps, name="Infiles/m_AtNoTemp_Herps", end_col_name = "X2015")
-m_AtNoTemp_Fish_infile <- create_infile(LPI_full, index_vector=m_AtNoTemp_Fish, name="Infiles/m_AtNoTemp_Fish", end_col_name = "X2015")
+m_TroSubIndo_Aves_infile <- create_infile(LPI_full, index_vector=m_TroSubIndo_Aves, name="Infiles/m_TroSubIndo_Aves", end_col_name = "X2019")
+m_TroSubIndo_Mammalia_infile <- create_infile(LPI_full, index_vector=m_TroSubIndo_Mammalia, name="Infiles/m_TroSubIndo_Mammalia", end_col_name = "X2019")
+m_TroSubIndo_Herps_infile <- create_infile(LPI_full, index_vector=m_TroSubIndo_Herps, name="Infiles/m_TroSubIndo_Herps", end_col_name = "X2019")
+m_TroSubIndo_Fish_infile <- create_infile(LPI_full, index_vector=m_TroSubIndo_Fish, name="Infiles/m_TroSubIndo_Fish", end_col_name = "X2019")
 
-m_AtTrSub_Aves_infile <- create_infile(LPI_full, index_vector=m_AtTrSub_Aves, name="Infiles/m_AtTrSub_Aves", end_col_name = "X2015")
-m_AtTrSub_Mammalia_infile <- create_infile(LPI_full, index_vector=m_AtTrSub_Mammalia, name="Infiles/m_AtTrSub_Mammalia", end_col_name = "X2015")
-m_AtTrSub_Herps_infile <- create_infile(LPI_full, index_vector=m_AtTrSub_Herps, name="Infiles/m_AtTrSub_Herps", end_col_name = "X2015")
-m_AtTrSub_Fish_infile <- create_infile(LPI_full, index_vector=m_AtTrSub_Fish, name="Infiles/m_AtTrSub_Fish", end_col_name = "X2015")
-
-m_Arctic_Aves_infile <- create_infile(LPI_full, index_vector=m_Arctic_Aves, name="Infiles/m_Arctic_Aves", end_col_name = "X2015")
-m_Arctic_Mammalia_infile <- create_infile(LPI_full, index_vector=m_Arctic_Mammalia, name="Infiles/m_Arctic_Mammalia", end_col_name = "X2015")
-m_Arctic_Fish_infile <- create_infile(LPI_full, index_vector=m_Arctic_Fish, name="Infiles/m_Arctic_Fish", end_col_name = "X2015")
-
-m_SoTeAnt_Aves_infile <- create_infile(LPI_full, index_vector=m_SoTeAnt_Aves, name="Infiles/m_SoTeAnt_Aves", end_col_name = "X2015")
-m_SoTeAnt_Mammalia_infile <- create_infile(LPI_full, index_vector=m_SoTeAnt_Mammalia, name="Infiles/m_SoTeAnt_Mammalia", end_col_name = "X2015")
-m_SoTeAnt_Fish_infile <- create_infile(LPI_full, index_vector=m_SoTeAnt_Fish, name="Infiles/m_SoTeAnt_Fish", end_col_name = "X2015")
-
-m_TroSubIndo_Aves_infile <- create_infile(LPI_full, index_vector=m_TroSubIndo_Aves, name="Infiles/m_TroSubIndo_Aves", end_col_name = "X2015")
-m_TroSubIndo_Mammalia_infile <- create_infile(LPI_full, index_vector=m_TroSubIndo_Mammalia, name="Infiles/m_TroSubIndo_Mammalia", end_col_name = "X2015")
-m_TroSubIndo_Herps_infile <- create_infile(LPI_full, index_vector=m_TroSubIndo_Herps, name="Infiles/m_TroSubIndo_Herps", end_col_name = "X2015")
-m_TroSubIndo_Fish_infile <- create_infile(LPI_full, index_vector=m_TroSubIndo_Fish, name="Infiles/m_TroSubIndo_Fish", end_col_name = "X2015")
-
-m_PaNoTemp_Aves_infile <- create_infile(LPI_full, index_vector=m_PaNoTemp_Aves, name="Infiles/m_PaNoTemp_Aves", end_col_name = "X2015")
-m_PaNoTemp_Mammalia_infile <- create_infile(LPI_full, index_vector=m_PaNoTemp_Mammalia, name="Infiles/m_PaNoTemp_Mammalia", end_col_name = "X2015")
-m_PaNoTemp_Herps_infile <- create_infile(LPI_full, index_vector=m_PaNoTemp_Herps, name="Infiles/m_PaNoTemp_Herps", end_col_name = "X2015")
-m_PaNoTemp_Fish_infile <- create_infile(LPI_full, index_vector=m_PaNoTemp_Fish, name="Infiles/m_PaNoTemp_Fish", end_col_name = "X2015")
+m_PaNoTemp_Aves_infile <- create_infile(LPI_full, index_vector=m_PaNoTemp_Aves, name="Infiles/m_PaNoTemp_Aves", end_col_name = "X2019")
+m_PaNoTemp_Mammalia_infile <- create_infile(LPI_full, index_vector=m_PaNoTemp_Mammalia, name="Infiles/m_PaNoTemp_Mammalia", end_col_name = "X2019")
+m_PaNoTemp_Herps_infile <- create_infile(LPI_full, index_vector=m_PaNoTemp_Herps, name="Infiles/m_PaNoTemp_Herps", end_col_name = "X2019")
+m_PaNoTemp_Fish_infile <- create_infile(LPI_full, index_vector=m_PaNoTemp_Fish, name="Infiles/m_PaNoTemp_Fish", end_col_name = "X2019")
 
 # create list of taxonomic groups for index list
 model_tax_list <- rep(unique(tax_group_IDs), length(unique(sys_IDs)))
@@ -390,8 +376,8 @@ model_pop_list <- list()
 # select populations to form each group index
 for (i in 1:length(model_tax_list)) {
   
-  temp <- LPI_culled$PopID[which(LPI_culled$SysID==model_sys_list[i] & 
-                                   LPI_culled$GrpID==model_tax_list[i])]
+  temp <- LPI_trimmed$PopID[which(LPI_trimmed$SysID==model_sys_list[i] & 
+                                   LPI_trimmed$GrpID==model_tax_list[i])]
   
   if (length(temp)==0) {
     
@@ -403,20 +389,20 @@ for (i in 1:length(model_tax_list)) {
   
 }
 
-
-
-
 # calculate mean growth rate for each LPI group
 gr.stats.list <- list()
 # loop over taxonomic groups
 for (i in 1:length(model_pop_list)) {
   
   # select all copies of the populations listed in the sample
-  group_data <- LPI_culled[LPI_culled$PopID %in% model_pop_list[[i]],]
+  group_data <- LPI_trimmed[LPI_trimmed$PopID %in% model_pop_list[[i]],]
+  
+  # remove all populations with less than 2 data points
+  group_data_culled <- cull_fn(group_data, 2, 2, c2)
   
   # log-linear interpolate populations shorter than 6 years, without forecasting
   # populations 6 years or longer will be interpolated with a GAM in the next step
-  grp_completed <- complete_time_series(group_data, c2, m_colnames2, calcsd=TRUE)
+  grp_completed <- complete_time_series(group_data_culled, c2, m_colnames2, calcsd=TRUE)
   
   if (nrow(grp_completed) >=1) {
     
@@ -631,7 +617,7 @@ for (i in 1:length(model_pop_list)) {
   }
   
   # select all copies of the populations listed in the sample
-  group_data <- LPI_culled[LPI_culled$PopID %in% model_pop_list[[i]],]
+  group_data <- LPI_trimmed[LPI_trimmed$PopID %in% model_pop_list[[i]],]
   
   # create list of x randomly sampled populations from the species group, where x is sample size
   sample_pop_id_list <- sample(group_data$PopID, actual.samp.size.list[[i]])
@@ -659,78 +645,233 @@ for (i in unique(model_sys_list)) {
 }
 
 
-T_Aves_model <- LPI_culled$PopID %in% model_sampled_pop_list[[1]]
-T_Mammalia_model <- LPI_culled$PopID %in% model_sampled_pop_list[[2]]
-T_Herps_model <- LPI_culled$PopID %in% model_sampled_pop_list[[3]]
-fw_Aves_model <- LPI_culled$PopID %in% model_sampled_pop_list[[5]]
-fw_Mammalia_model <- LPI_culled$PopID %in% model_sampled_pop_list[[6]]
-fw_Herps_model <- LPI_culled$PopID %in% model_sampled_pop_list[[7]]
-fw_Fish_model <- LPI_culled$PopID %in% model_sampled_pop_list[[8]]
-m_Aves_model <- LPI_culled$PopID %in% model_sampled_pop_list[[9]]
-m_Mammalia_model <- LPI_culled$PopID %in% model_sampled_pop_list[[10]]
-m_Herps_model <- LPI_culled$PopID %in% model_sampled_pop_list[[11]]
-m_Fish_model <- LPI_culled$PopID %in% model_sampled_pop_list[[12]]
+T_Aves_model <- LPI_trimmed$PopID %in% model_sampled_pop_list[[1]]
+T_Mammalia_model <- LPI_trimmed$PopID %in% model_sampled_pop_list[[2]]
+T_Herps_model <- LPI_trimmed$PopID %in% model_sampled_pop_list[[3]]
+fw_Aves_model <- LPI_trimmed$PopID %in% model_sampled_pop_list[[5]]
+fw_Mammalia_model <- LPI_trimmed$PopID %in% model_sampled_pop_list[[6]]
+fw_Herps_model <- LPI_trimmed$PopID %in% model_sampled_pop_list[[7]]
+fw_Fish_model <- LPI_trimmed$PopID %in% model_sampled_pop_list[[8]]
+m_Aves_model <- LPI_trimmed$PopID %in% model_sampled_pop_list[[9]]
+m_Mammalia_model <- LPI_trimmed$PopID %in% model_sampled_pop_list[[10]]
+m_Herps_model <- LPI_trimmed$PopID %in% model_sampled_pop_list[[11]]
+m_Fish_model <- LPI_trimmed$PopID %in% model_sampled_pop_list[[12]]
 
-T_Aves_model_infile <- create_infile(LPI_full, index_vector=T_Aves_model, name="Infiles/T_Aves_model", end_col_name = "X2015")
-T_Mammalia_model_infile <- create_infile(LPI_full, index_vector=T_Mammalia_model, name="Infiles/T_Mammalia_model", end_col_name = "X2015")
-T_Herps_model_infile <- create_infile(LPI_full, index_vector=T_Herps_model, name="Infiles/T_Herps_model", end_col_name = "X2015")
-fw_Aves_model_infile <- create_infile(LPI_full, index_vector=fw_Aves_model, name="Infiles/fw_Aves_model", end_col_name = "X2015")
-fw_Mammalia_model_infile <- create_infile(LPI_full, index_vector=fw_Mammalia_model, name="Infiles/fw_Mammalia_model", end_col_name = "X2015")
-fw_Herps_model_infile <- create_infile(LPI_full, index_vector=fw_Herps_model, name="Infiles/fw_Herps_model", end_col_name = "X2015")
-fw_Fish_model_infile <- create_infile(LPI_full, index_vector=fw_Fish_model, name="Infiles/fw_Fish_model", end_col_name = "X2015")
-m_Aves_model_infile <- create_infile(LPI_full, index_vector=m_Aves_model, name="Infiles/m_Aves_model", end_col_name = "X2015")
-m_Mammalia_model_infile <- create_infile(LPI_full, index_vector=m_Mammalia_model, name="Infiles/m_Mammalia_model", end_col_name = "X2015")
-m_Herps_model_infile <- create_infile(LPI_full, index_vector=m_Herps_model, name="Infiles/m_Herps_model", end_col_name = "X2015")
-m_Fish_model_infile <- create_infile(LPI_full, index_vector=m_Fish_model, name="Infiles/m_Fish_model", end_col_name = "X2015")
+T_Aves_model_infile <- create_infile(LPI_full, index_vector=T_Aves_model, name="Infiles/T_Aves_model", end_col_name = "X2019")
+T_Mammalia_model_infile <- create_infile(LPI_full, index_vector=T_Mammalia_model, name="Infiles/T_Mammalia_model", end_col_name = "X2019")
+T_Herps_model_infile <- create_infile(LPI_full, index_vector=T_Herps_model, name="Infiles/T_Herps_model", end_col_name = "X2019")
+fw_Aves_model_infile <- create_infile(LPI_full, index_vector=fw_Aves_model, name="Infiles/fw_Aves_model", end_col_name = "X2019")
+fw_Mammalia_model_infile <- create_infile(LPI_full, index_vector=fw_Mammalia_model, name="Infiles/fw_Mammalia_model", end_col_name = "X2019")
+fw_Herps_model_infile <- create_infile(LPI_full, index_vector=fw_Herps_model, name="Infiles/fw_Herps_model", end_col_name = "X2019")
+fw_Fish_model_infile <- create_infile(LPI_full, index_vector=fw_Fish_model, name="Infiles/fw_Fish_model", end_col_name = "X2019")
+m_Aves_model_infile <- create_infile(LPI_full, index_vector=m_Aves_model, name="Infiles/m_Aves_model", end_col_name = "X2019")
+m_Mammalia_model_infile <- create_infile(LPI_full, index_vector=m_Mammalia_model, name="Infiles/m_Mammalia_model", end_col_name = "X2019")
+m_Herps_model_infile <- create_infile(LPI_full, index_vector=m_Herps_model, name="Infiles/m_Herps_model", end_col_name = "X2019")
+m_Fish_model_infile <- create_infile(LPI_full, index_vector=m_Fish_model, name="Infiles/m_Fish_model", end_col_name = "X2019")
+
+
+Amphibian_vec <- LPI_full$Class=="Amphibia"
+Reptile_vec <- LPI_full$Class=="Reptilia"
+Herps_vec <- LPI_full$Class=="Amphibia" | (LPI_full$Class=="Reptilia" & LPI_full$Family!="Elapidae")
+fw_Herps_vec <- (LPI_full$Class=="Amphibia" & LPI_full$FW_realm!="NULL") | (LPI_full$Class=="Reptilia" & LPI_full$FW_realm!="NULL")
+T_Herps_vec <- (LPI_full$Class=="Amphibia" & LPI_full$T_realm!="NULL" & LPI_full$ID!=919) | (LPI_full$Class=="Reptilia" & LPI_full$T_realm!="NULL")
+m_Herps_vec <- (LPI_full$Class=="Amphibia" & LPI_full$M_realm!="NULL") | (LPI_full$Class=="Reptilia" & LPI_full$M_realm!="NULL")
+fw_Amphibian_vec <- (LPI_full$Class=="Amphibia" & LPI_full$FW_realm!="NULL")
+fw_Reptile_vec <- (LPI_full$Class=="Reptilia" & LPI_full$FW_realm!="NULL")
+T_Amphibian_vec <- (LPI_full$Class=="Amphibia" & LPI_full$T_realm!="NULL")
+T_Reptile_vec <- (LPI_full$Class=="Reptilia" & LPI_full$T_realm!="NULL")
+m_Amphibian_vec <- (LPI_full$Class=="Amphibia" & LPI_full$M_realm!="NULL")
+m_Reptile_vec <- (LPI_full$Class=="Reptilia" & LPI_full$M_realm!="NULL" & LPI_full$Order!="Squamata")
+
+Amphibian_infile <- create_infile(LPI_full, index_vector=Amphibian_vec, name="Infiles/Amphibian", end_col_name = "X2019")
+Reptile_infile <- create_infile(LPI_full, index_vector=Reptile_vec, name="Infiles/Reptile", end_col_name = "X2019")
+Herps_infile <- create_infile(LPI_full, index_vector=Herps_vec, name="Infiles/Herps", end_col_name = "X2019")
+fw_Herps_infile <- create_infile(LPI_full, index_vector=fw_Herps_vec, name="Infiles/fw_Herps", end_col_name = "X2019")
+T_Herps_infile <- create_infile(LPI_full, index_vector=T_Herps_vec, name="Infiles/T_Herps", end_col_name = "X2019")
+m_Herps_infile <- create_infile(LPI_full, index_vector=m_Herps_vec, name="Infiles/m_Herps", end_col_name = "X2019")
+fw_Amphibian_infile <- create_infile(LPI_full, index_vector=fw_Amphibian_vec, name="Infiles/fw_Amphibian", end_col_name = "X2019")
+fw_Reptile_infile <- create_infile(LPI_full, index_vector=fw_Reptile_vec, name="Infiles/fw_Reptile", end_col_name = "X2019")
+T_Amphibian_infile <- create_infile(LPI_full, index_vector=T_Amphibian_vec, name="Infiles/T_Amphibian", end_col_name = "X2019")
+T_Reptile_infile <- create_infile(LPI_full, index_vector=T_Reptile_vec, name="Infiles/T_Reptile", end_col_name = "X2019")
+m_Aphibian_infile <- create_infile(LPI_full, index_vector=m_Amphibian_vec, name="Infiles/m_Amphibian", end_col_name = "X2019")
+m_Reptile_infile <- create_infile(LPI_full, index_vector=m_Reptile_vec, name="Infiles/m_Reptile", end_col_name = "X2019")
+
+LPI_FW_Afrotropical_Herps2 <- LPI_FW_Afrotropical_Herps[LPI_FW_Afrotropical_Herps$Species!="adspersus" &
+                                                          LPI_FW_Afrotropical_Herps$ID!=692 &
+                                                          LPI_FW_Afrotropical_Herps$ID!=18238,]
+FW_Afrotropical_Herps2_vec <- rownames(LPI_full) %in% rownames(LPI_FW_Afrotropical_Herps2)
+FW_Afrotropical_Herps2_infile <- create_infile(LPI_full, index_vector=FW_Afrotropical_Herps2_vec, name="Infiles/FW_Afrotropical_Herps2", end_col_name = "X2019")
+FW_Afrotropical_Herps2_lpi <- LPIMain("Infiles/FW_Afrotropical_Herps2_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+
+
+
+LPI_FW_IndoPacific_Herps <- LPI_full[(LPI_full$Class=="Reptilia" | 
+                                        LPI_full$Class=="Amphibia") &
+                                       (LPI_full$FW_realm=="Indo-Malayan" |
+                                          LPI_full$FW_realm=="Oceania" |
+                                          LPI_full$FW_realm=="Australasia"), ]
+
+LPI_FW_IndoPacific_Herps2 <- LPI_FW_IndoPacific_Herps[LPI_FW_IndoPacific_Herps$Common_name!="Northern corroboree frog" & 
+                                                        LPI_FW_IndoPacific_Herps$Common_name!="Corroboree frog" & 
+                                                        LPI_FW_IndoPacific_Herps$Common_name!="Baw baw frog",]
+
+LPI_FW_IndoPacific_Herps3 <- LPI_FW_IndoPacific_Herps[LPI_FW_IndoPacific_Herps$Species!="australis" & 
+                                                        LPI_FW_IndoPacific_Herps$Country!="Nepal",]
+
+LPI_FW_IndoPacific_Herps4 <- LPI_FW_IndoPacific_Herps2[LPI_FW_IndoPacific_Herps2$Species!="australis" & 
+                                                        LPI_FW_IndoPacific_Herps2$Country!="Nepal",]
+
+FW_IndoPacific_Herps2_vec <- rownames(LPI_full) %in% rownames(LPI_FW_IndoPacific_Herps2)
+FW_IndoPacific_Herps2_infile <- create_infile(LPI_full, index_vector=FW_IndoPacific_Herps2_vec, name="Infiles/FW_IndoPacific_Herps2", end_col_name = "X2019")
+FW_IndoPacific_Herps2_lpi <- LPIMain("Infiles/FW_IndoPacific_Herps2_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+
+FW_IndoPacific_Herps3_vec <- rownames(LPI_full) %in% rownames(LPI_FW_IndoPacific_Herps3)
+FW_IndoPacific_Herps3_infile <- create_infile(LPI_full, index_vector=FW_IndoPacific_Herps3_vec, name="Infiles/FW_IndoPacific_Herps3", end_col_name = "X2019")
+FW_IndoPacific_Herps3_lpi <- LPIMain("Infiles/FW_IndoPacific_Herps3_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+
+FW_IndoPacific_Herps4_vec <- rownames(LPI_full) %in% rownames(LPI_FW_IndoPacific_Herps4)
+FW_IndoPacific_Herps4_infile <- create_infile(LPI_full, index_vector=FW_IndoPacific_Herps4_vec, name="Infiles/FW_IndoPacific_Herps4", end_col_name = "X2019")
+FW_IndoPacific_Herps4_lpi <- LPIMain("Infiles/FW_IndoPacific_Herps4_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+
+
+fw_IndoPacific_Herps_lpi <- fw_IndoPacific_Herps_lpi[complete.cases(fw_IndoPacific_Herps_lpi), ]
+FW_IndoPacific_Herps2_lpi <- FW_IndoPacific_Herps2_lpi[complete.cases(FW_IndoPacific_Herps2_lpi), ]
+FW_IndoPacific_Herps3_lpi <- FW_IndoPacific_Herps3_lpi[complete.cases(FW_IndoPacific_Herps3_lpi), ]
+FW_IndoPacific_Herps4_lpi <- FW_IndoPacific_Herps4_lpi[complete.cases(FW_IndoPacific_Herps4_lpi), ]
+
+ggplot_lpi(fw_IndoPacific_Herps_lpi, ylim=c(0,2))
+ggplot_lpi(FW_IndoPacific_Herps2_lpi, ylim=c(0,2))
+ggplot_lpi(FW_IndoPacific_Herps3_lpi, ylim=c(0,2))
+ggplot_lpi(FW_IndoPacific_Herps4_lpi, ylim=c(0,2))
+
+Herps_analysis_lpi2 <- list(fw_IndoPacific_Herps_lpi, 
+                           FW_IndoPacific_Herps2_lpi,
+                           FW_IndoPacific_Herps3_lpi,
+                           FW_IndoPacific_Herps4_lpi)
+
+Herps_analysis_lpi_plot2 <- ggplot_multi_lpi(Herps_analysis_lpi2, 
+                                            title="Freshwater IndoPacific Herps", 
+                                            names=c("normal LPI trend",
+                                                    "trend with 3 crashing species removed",
+                                                    "trend with 2 rising species removed",
+                                                    "trend with all 5 species removed"), 
+                                            xlims=c(1970, 2018), 
+                                            ylims=c(0,2), 
+                                            facet=TRUE) +
+  theme(legend.position="none", legend.title=element_blank())
+
+ggsave("Plots/IndoPacific_Herps_sensitivity2.jpeg", 
+       Herps_analysis_lpi_plot2, 
+       height = 2000, 
+       width = 8000, 
+       units="px")
+
+
+
+
+Amphibian_lpi  <- LPIMain("Infiles/Amphibian_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+Reptile_lpi  <- LPIMain("Infiles/Reptile_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+Herps_lpi  <- LPIMain("Infiles/Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_Herps_lpi  <- LPIMain("Infiles/fw_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+T_Herps_lpi  <- LPIMain("Infiles/T_Herps_infile.txt", REF_YEAR = 1976, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_Herps_lpi  <- LPIMain("Infiles/m_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_Amphibian_lpi  <- LPIMain("Infiles/fw_Amphibian_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_Reptile_lpi  <- LPIMain("Infiles/fw_Reptile_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+T_Amphibian_lpi  <- LPIMain("Infiles/T_Amphibian_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+T_Reptile_lpi  <- LPIMain("Infiles/T_Reptile_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_Amphibian_lpi  <- LPIMain("Infiles/m_Amphibian_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_Reptile_lpi  <- LPIMain("Infiles/m_Reptile_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+
+m_TroSubIndo_Herps_lpi  <- LPIMain("Infiles/m_TroSubIndo_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_TroSubIndo_lpi <- LPIMain("Infiles/m_TroSubIndo_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
+
 
 # create indices and plot
-fw_Afrotropical_fish_lpi  <- LPIMain("Infiles/fw_Afrotropical_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2014, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
-fw_IndoPacific_fish_lpi  <- LPIMain("Infiles/fw_IndoPacific_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2014, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
-fw_Palearctic_fish_lpi  <- LPIMain("Infiles/fw_Palearctic_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2014, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
-fw_Neotropical_fish_lpi  <- LPIMain("Infiles/fw_Neotropical_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2014, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
-fw_Nearctic_fish_lpi  <- LPIMain("Infiles/fw_Nearctic_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2014, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_Afrotropical_fish_lpi  <- LPIMain("Infiles/fw_Afrotropical_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_IndoPacific_fish_lpi  <- LPIMain("Infiles/fw_IndoPacific_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_Palearctic_fish_lpi  <- LPIMain("Infiles/fw_Palearctic_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_Neotropical_fish_lpi  <- LPIMain("Infiles/fw_Neotropical_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_Nearctic_fish_lpi  <- LPIMain("Infiles/fw_Nearctic_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
 
-fw_herps_
+T_Afrotropical_Herps_lpi  <- LPIMain("Infiles/T_Afrotropical_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+T_IndoPacific_Herps_lpi  <- LPIMain("Infiles/T_IndoPacific_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+T_Palearctic_Herps_lpi  <- LPIMain("Infiles/T_Palearctic_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+T_Neotropical_Herps_lpi  <- LPIMain("Infiles/T_Neotropical_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+T_Nearctic_Herps_lpi  <- LPIMain("Infiles/T_Nearctic_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
 
-t_mam_lpi  <- LPIMain("Infiles/terrestrial_mammals_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2014, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=1)
-fw_mam_lpi  <- LPIMain("Infiles/freshwater_mammals_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2014, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=1)
-fw_herps_lpi  <- LPIMain("Infiles/freshwater_herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2014, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=1)
-fw_fish_lpi  <- LPIMain("Infiles/freshwater_fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2014, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=1)
-terrestrial_lpi <- LPIMain("Infiles/terrestrial_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2014, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=1)
-freshwater_lpi <- LPIMain("Infiles/freshwater_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2014, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=1)
-marine_lpi <- LPIMain("Infiles/marine_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2014, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=1)
-#full_lpi <- LPIMain("lpi_infile.txt", REF_YEAR = 1970, PLOT_MAX = 100, force_recalculation=1, use_weightings=1, use_weightings_B=1)
-full_lpi_index_data <- data.frame("terrestrial"=terrestrial_lpi[,1], "freshwater"=freshwater_lpi[,12014, BOOT_STRAP_SIZE = ], "marine"=marine_lpi[,1])
-rownames(full_lpi_index_data) <- rownames(terrestrial_lpi)
-full_lpi_index <- apply(full_lpi_index_data, 1, mean)
-full_lpi_cilow_data <- data.frame("terrestrial"=terrestrial_lpi[,2], "freshwater"=freshwater_lpi[,2], "marine"=marine_lpi[,2])
-rownames(full_lpi_cilow_data) <- rownames(terrestrial_lpi)
-full_lpi_cilow <- apply(full_lpi_cilow_data, 1, function(i) {
-  temp2 <- vector()
-  for (j in 1:100) {
-    temp <- sample(i, replace=T)
-    temp2[j] <- mean(temp)
-  }
-  temp3 <- mean(temp2)
-  return(temp3)
-})
-full_lpi_cihigh_data <- data.frame("terrestrial"=terrestrial_lpi[,3], "freshwater"=freshwater_lpi[,3], "marine"=marine_lpi[,3])
-rownames(full_lpi_cihigh_data) <- rownames(terrestrial_lpi)
-full_lpi_cihigh <- apply(full_lpi_cihigh_data, 1, function(i) {
-  temp2 <- vector()
-  for (j in 1:100) {
-    temp <- sample(i, replace=T)
-    temp2[j] <- mean(temp)
-  }
-  temp3 <- mean(temp2)
-  return(temp3)
-})
-full_lpi <- data.frame("LPI_final"=full_lpi_index, "CI_low"=full_lpi_cilow, "CI_high"=full_lpi_cihigh)
+fw_Afrotropical_Herps_lpi  <- LPIMain("Infiles/fw_Afrotropical_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_IndoPacific_Herps_lpi  <- LPIMain("Infiles/fw_IndoPacific_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_Palearctic_Herps_lpi  <- LPIMain("Infiles/fw_Palearctic_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_Neotropical_Herps_lpi  <- LPIMain("Infiles/fw_Neotropical_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_Nearctic_Herps_lpi  <- LPIMain("Infiles/fw_Nearctic_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
 
-terrestrial_model_lpi <- LPIMain("Infiles/terrestrial_model_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2014, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
-freshwater_model_lpi <- LPIMain("Infiles/freshwater_model_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2014, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
-marine_model_lpi <- LPIMain("Infiles/marine_model_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2014, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
-full_model_lpi <- LPIMain("Infiles/lpi_model_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2014, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
+T_Afrotropical_Aves_lpi  <- LPIMain("Infiles/T_Afrotropical_Aves_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+T_IndoPacific_Aves_lpi  <- LPIMain("Infiles/T_IndoPacific_Aves_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+T_Palearctic_Aves_lpi  <- LPIMain("Infiles/T_Palearctic_Aves_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+T_Neotropical_Aves_lpi  <- LPIMain("Infiles/T_Neotropical_Aves_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+T_Nearctic_Aves_lpi  <- LPIMain("Infiles/T_Nearctic_Aves_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+
+fw_Afrotropical_Aves_lpi  <- LPIMain("Infiles/fw_Afrotropical_Aves_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_IndoPacific_Aves_lpi  <- LPIMain("Infiles/fw_IndoPacific_Aves_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_Palearctic_Aves_lpi  <- LPIMain("Infiles/fw_Palearctic_Aves_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_Neotropical_Aves_lpi  <- LPIMain("Infiles/fw_Neotropical_Aves_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_Nearctic_Aves_lpi  <- LPIMain("Infiles/fw_Nearctic_Aves_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+
+T_Afrotropical_Mammalia_lpi  <- LPIMain("Infiles/T_Afrotropical_Mammalia_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+T_IndoPacific_Mammalia_lpi  <- LPIMain("Infiles/T_IndoPacific_Mammalia_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+T_Palearctic_Mammalia_lpi  <- LPIMain("Infiles/T_Palearctic_Mammalia_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+T_Neotropical_Mammalia_lpi  <- LPIMain("Infiles/T_Neotropical_Mammalia_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+T_Nearctic_Mammalia_lpi  <- LPIMain("Infiles/T_Nearctic_Mammalia_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+
+fw_Afrotropical_Mammalia_lpi  <- LPIMain("Infiles/fw_Afrotropical_Mammalia_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_IndoPacific_Mammalia_lpi  <- LPIMain("Infiles/fw_IndoPacific_Mammalia_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_Palearctic_Mammalia_lpi  <- LPIMain("Infiles/fw_Palearctic_Mammalia_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_Neotropical_Mammalia_lpi  <- LPIMain("Infiles/fw_Neotropical_Mammalia_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+fw_Nearctic_Mammalia_lpi  <- LPIMain("Infiles/fw_Nearctic_Mammalia_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+
+m_AtNoTemp_Aves <- LPIMain("Infiles/m_AtNoTemp_Aves_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_AtTrSub_Aves <- LPIMain("Infiles/m_AtTrSub_Aves_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_Arctic_Aves <- LPIMain("Infiles/m_SoTeAnt_Aves_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_SoTeAnt_Aves <- LPIMain("Infiles/m_SoTeAnt_Aves_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_TroSubIndo_Aves <- LPIMain("Infiles/m_TroSubIndo_Aves_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_PaNoTemp_Aves <- LPIMain("Infiles/m_PaNoTemp_Aves_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+
+m_AtNoTemp_Mammalia <- LPIMain("Infiles/m_AtNoTemp_Mammalia_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_AtTrSub_Mammalia <- LPIMain("Infiles/m_AtTrSub_Mammalia_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_Arctic_Mammalia <- LPIMain("Infiles/m_SoTeAnt_Mammalia_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_SoTeAnt_Mammalia <- LPIMain("Infiles/m_SoTeAnt_Mammalia_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_TroSubIndo_Mammalia <- LPIMain("Infiles/m_TroSubIndo_Mammalia_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_PaNoTemp_Mammalia <- LPIMain("Infiles/m_PaNoTemp_Mammalia_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+
+m_AtNoTemp_Herps <- LPIMain("Infiles/m_AtNoTemp_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_AtTrSub_Herps <- LPIMain("Infiles/m_AtTrSub_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_Arctic_Herps <- LPIMain("Infiles/m_SoTeAnt_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_SoTeAnt_Herps <- LPIMain("Infiles/m_SoTeAnt_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_TroSubIndo_Herps <- LPIMain("Infiles/m_TroSubIndo_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_PaNoTemp_Herps <- LPIMain("Infiles/m_PaNoTemp_Herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+
+m_AtNoTemp_Fish <- LPIMain("Infiles/m_AtNoTemp_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_AtTrSub_Fish <- LPIMain("Infiles/m_AtTrSub_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_Arctic_Fish <- LPIMain("Infiles/m_SoTeAnt_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_SoTeAnt_Fish <- LPIMain("Infiles/m_SoTeAnt_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_TroSubIndo_Fish <- LPIMain("Infiles/m_TroSubIndo_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+m_PaNoTemp_Fish <- LPIMain("Infiles/m_PaNoTemp_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
+
+
+t_mam_lpi  <- LPIMain("Infiles/terrestrial_mammals_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=1)
+fw_mam_lpi  <- LPIMain("Infiles/freshwater_mammals_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=1)
+fw_herps_lpi  <- LPIMain("Infiles/freshwater_herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=1)
+fw_fish_lpi  <- LPIMain("Infiles/freshwater_fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=1)
+setwd("Infiles")
+terrestrial_lpi <- LPIMain("terrestrial_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=1)
+freshwater_lpi <- LPIMain("Infiles/freshwater_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=1)
+marine_lpi <- LPIMain("Infiles/marine_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=1)
+full_lpi <- LPIMain("lpi_infile.txt", REF_YEAR = 1970, PLOT_MAX = 100, force_recalculation=1, use_weightings=1, use_weightings_B=1)
+
+terrestrial_model_lpi <- LPIMain("Infiles/terrestrial_model_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
+freshwater_model_lpi <- LPIMain("Infiles/freshwater_model_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
+marine_model_lpi <- LPIMain("Infiles/marine_model_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
+full_model_lpi <- LPIMain("Infiles/lpi_model_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
 
 t_mam_lpi <- t_mam_lpi[complete.cases(t_mam_lpi), ]
 fw_mam_lpi <- fw_mam_lpi[complete.cases(fw_mam_lpi), ]
@@ -739,6 +880,10 @@ freshwater_lpi <- freshwater_lpi[complete.cases(freshwater_lpi), ]
 marine_lpi <- marine_lpi[complete.cases(marine_lpi), ] 
 full_lpi <- full_lpi[complete.cases(full_lpi), ] 
 
+T_Afrotropical_Herps_lpi <- T_Afrotropical_Herps_lpi[complete.cases(T_Afrotropical_Herps_lpi), ]
+fw_Afrotropical_Herps_lpi <- fw_Afrotropical_Herps_lpi[complete.cases(fw_Afrotropical_Herps_lpi), ]
+T_IndoPacific_Herps_lpi <- T_IndoPacific_Herps_lpi[complete.cases(T_IndoPacific_Herps_lpi), ]
+fw_IndoPacific_Herps_lpi <- fw_IndoPacific_Herps_lpi[complete.cases(fw_IndoPacific_Herps_lpi), ]
 
 terrestrial_model_lpi <- terrestrial_model_lpi[complete.cases(terrestrial_model_lpi), ]
 freshwater_model_lpi <- freshwater_model_lpi[complete.cases(freshwater_model_lpi), ]
@@ -751,6 +896,34 @@ ggplot_lpi(terrestrial_lpi, ylim=c(0,2))
 ggplot_lpi(freshwater_lpi, ylim=c(0,2))
 ggplot_lpi(marine_lpi, ylim=c(0,2))
 ggplot_lpi(full_lpi, ylim=c(0,2))
+
+ggplot_lpi(T_Afrotropical_Herps_lpi, ylim=c(0,5))
+ggplot_lpi(T_IndoPacific_Herps_lpi, ylim=c(0,5))
+ggplot_lpi(fw_Afrotropical_Herps_lpi, ylim=c(0,1))
+ggplot_lpi(fw_IndoPacific_Herps_lpi, ylim=c(0,1))
+
+Herps_analysis_lpi <- list(T_Afrotropical_Herps_lpi, 
+                           T_IndoPacific_Herps_lpi,
+                           fw_Afrotropical_Herps_lpi, 
+                           fw_IndoPacific_Herps_lpi)
+
+
+Herps_analysis_lpi_plot <- ggplot_multi_lpi(Herps_analysis_lpi, 
+                                            title="", 
+                                            names=c("Terrestrial Afrotropical Herps", 
+                                                    "Terrestrial Indopacific Herps",
+                                                    "Freshwater Afrotropical Herps",
+                                                    "Freshwater IndoPacific Herps"), 
+                                            xlims=c(1970, 2018), 
+                                            ylims=c(0,5), 
+                                            facet=TRUE) +
+  theme(legend.position="none", legend.title=element_blank())
+
+ggsave("Plots/Afro_and_Indo_Herps.jpeg", 
+       Herps_analysis_lpi_plot, 
+       height = 2000, 
+       width = 6000, 
+       units="px")
 
 
 ggplot_lpi(terrestrial_model_lpi, ylim=c(0,2))
@@ -772,23 +945,23 @@ combined_lpi_systems <- list(combined_lpi_terrestrial, combined_lpi_freshwater, 
 
 combined_lpi_all <- list(full_lpi, full_model_lpi)
 
-ggplot_multi_lpi(lpi_systems, names=c("Terrestrial LPI", "Freshwater LPI", "Marine LPI"), xlims=c(1970, 2015), ylims=c(0,2), facet=TRUE)
+ggplot_multi_lpi(lpi_systems, names=c("Terrestrial LPI", "Freshwater LPI", "Marine LPI"), xlims=c(1970, 2018), ylims=c(0,2), facet=TRUE)
 
-ggplot_multi_lpi(model_lpi_systems, names=c("Terrestrial Sampled", "Freshwater Sampled", "Marine Sampled"), xlims=c(1970, 2015), ylims=c(0,2), facet=TRUE)
+ggplot_multi_lpi(model_lpi_systems, names=c("Terrestrial Sampled", "Freshwater Sampled", "Marine Sampled"), xlims=c(1970, 2018), ylims=c(0,2), facet=TRUE)
 
-lpi_plot <- ggplot_multi_lpi(combined_lpi_all, title="Living Planet Index", names=c("Diversity Weighted", "Sampled"), xlims=c(1970, 2014), ylims=c(0,2), facet=FALSE) +
+lpi_plot <- ggplot_multi_lpi(combined_lpi_all, title="Living Planet Index", names=c("Diversity Weighted", "Sampled"), xlims=c(1970, 2018), ylims=c(0,2), facet=FALSE) +
   theme(legend.position=c(0.3,0.9), legend.title=element_blank())
 
-terr_plot <- ggplot_multi_lpi(combined_lpi_terrestrial, title="Terrestrial", names=c("Diversity Weighted", "Sampled"), xlims=c(1970, 2014), ylims=c(0,2), facet=FALSE) +
+terr_plot <- ggplot_multi_lpi(combined_lpi_terrestrial, title="Terrestrial", names=c("Diversity Weighted", "Sampled"), xlims=c(1970, 2018), ylims=c(0,2), facet=FALSE) +
   theme(legend.position=c(0.3,0.85), legend.title=element_blank())
 
-fw_plot <- ggplot_multi_lpi(combined_lpi_freshwater, title="Freshwater", names=c("Diversity Weighted", "Sampled"), xlims=c(1970, 2014), ylims=c(0,2), facet=FALSE) +
+fw_plot <- ggplot_multi_lpi(combined_lpi_freshwater, title="Freshwater", names=c("Diversity Weighted", "Sampled"), xlims=c(1970, 2018), ylims=c(0,2), facet=FALSE) +
   theme(legend.position=c(0.3,0.85), legend.title=element_blank())
 
-mar_plot <- ggplot_multi_lpi(combined_lpi_marine, title="Marine", names=c("Diversity Weighted", "Sampled"), xlims=c(1970, 2014), ylims=c(0,2), facet=FALSE) +
+mar_plot <- ggplot_multi_lpi(combined_lpi_marine, title="Marine", names=c("Diversity Weighted", "Sampled"), xlims=c(1970, 2018), ylims=c(0,2), facet=FALSE) +
   theme(legend.position=c(0.3,0.85), legend.title=element_blank())
 
-ggplot_multi_lpi(combined_lpi_systems, names=c("Terrestrial", "Freshwater", "Marine"), xlims=c(1970, 2015), ylims=c(0,2), facet=TRUE)
+ggplot_multi_lpi(combined_lpi_systems, names=c("Terrestrial", "Freshwater", "Marine"), xlims=c(1970, 2018), ylims=c(0,2), facet=TRUE)
 
 all_plots <- grid.arrange(terr_plot, fw_plot, mar_plot, ncol=2)
 

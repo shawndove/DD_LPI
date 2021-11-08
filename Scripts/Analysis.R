@@ -15,9 +15,9 @@ colnames(LPI_full)[1] <- "ID"
 colnames(LPI_full) <- gsub("X", "", colnames(LPI_full))
 
 # replace "NULL" values with NA
-#LPI_full2 <- apply(LPI_full[,65:134], 2, as.numeric)
-#LPI_full[,65:134] <- LPI_full2
-#remove(LPI_full2)
+LPI_full2 <- apply(LPI_full[,65:134], 2, as.numeric)
+LPI_full[,65:134] <- LPI_full2
+remove(LPI_full2)
 
 # get group data
 #amphibians <- LPI_full[LPI_full$Class=="Amphibia",]
@@ -28,7 +28,7 @@ colnames(LPI_full) <- gsub("X", "", colnames(LPI_full))
 
 # convert to long format
 test <- LPI_full %>% 
-  pivot_longer('1950':'2019',
+  pivot_longer('1970':'2019',
                names_to = "year",
                values_to = "value")
 
@@ -39,9 +39,9 @@ test$year <- as.integer(test$year)
 test$value <- as.numeric(test$value)
 
 test2 <- test %>% 
-  group_by(ID) %>% # treat each population separately
+  dplyr::group_by(ID) %>% # treat each population separately
   filter(!is.na(value)) %>% # remove NA values
-  mutate(start_year = min(year),
+  dplyr::mutate(start_year = min(year),
          last_year = max(year),
          ts_length = last_year - start_year+1, # calculate length of time series
          n_obs = sum(year > 0)) %>% # count the number of years with values
@@ -94,3 +94,31 @@ gr_vs_length <- data.frame(Length = ts.lengths, Num_Obs = ts.numobs, Max_GR = gr
 
 amphibians_gr_df <- gr_vs_length
 
+
+test_geotax <- test %>% 
+  group_by(Class, T_realm, FW_realm, M_realm) %>% # group by class and realm
+  filter(!is.na(value)) %>% # remove NA values
+  mutate(start_year = min(year),
+         last_year = max(year),
+         ts_length = last_year - start_year+1, # calculate length of time series
+         n_obs = sum(year > 0),
+         n_pops = length(unique(ID)), # calculate number of populations in each realm/class combination
+         m_obs = n_obs/n_pops) %>% # calculate the mean number of observations per population
+  select(Class, T_realm, FW_realm, M_realm, start_year, last_year, ts_length, n_obs, n_pops, m_obs) %>% # remove all extra columns
+  distinct() %>% # remove duplicate populations
+  ungroup() # remove grouping
+
+test_specpop <- test %>% 
+  group_by(Class, T_realm, FW_realm, M_realm) %>% # group by class and realm
+  filter(!is.na(value)) %>% # remove NA values
+  mutate(start_year = min(year),
+         last_year = max(year),
+         ts_length = last_year - start_year+1, # calculate length of time series
+         n_obs = sum(year > 0),
+         n_pops = length(unique(ID)), # calculate number of populations in each realm/class combination
+         n_spec = length(unique(Common_name)),
+         m_obs = n_obs/n_pops,
+         m_popspec = n_pops/n_spec) %>% # calculate the mean number of observations per population
+  select(Class, T_realm, FW_realm, M_realm, n_pops, n_spec, m_obs, m_popspec) %>% # remove all extra columns
+  distinct() %>% # remove duplicate populations
+  ungroup() # remove grouping

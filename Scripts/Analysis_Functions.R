@@ -9,7 +9,7 @@ LPIyeardata <- function(groupdata, first_year = 1950, max_year = 2019, plot_titl
   }
   LPI_years <- c(first_year:max_year)
   years_matrix<-matrix(c(years_sum_all,LPI_years), ncol=2, byrow=FALSE)
-  plot(years_matrix[,2],years_matrix[,1], main=plot_title)
+  plot(years_matrix[,2],years_matrix[,1], main=plot_title, xlab="Year", ylab="Number of Observations")
   return(years_matrix)
 }
 

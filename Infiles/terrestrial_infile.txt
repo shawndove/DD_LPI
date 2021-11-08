@@ -1,16 +1,12 @@
 FileName	Group	Weighting	WeightingB
 T_Afrotropical_Aves_pops.txt	1	0.387205957	0.189737662
 T_Afrotropical_Mammalia_pops.txt	1	0.197833813	0.189737662
-T_Afrotropical_Herps_pops.txt	1	0.41496023	0.189737662
 T_IndoPacific_Aves_pops.txt	2	0.396527091	0.292168385
 T_IndoPacific_Mammalia_pops.txt	2	0.172106825	0.292168385
-T_IndoPacific_Herps_pops.txt	2	0.431366084	0.292168385
 T_Palearctic_Aves_pops.txt	3	0.433535576	0.116430659
 T_Palearctic_Mammalia_pops.txt	3	0.249862107	0.116430659
-T_Palearctic_Herps_pops.txt	3	0.316602317	0.116430659
 T_Neotropical_Aves_pops.txt	4	0.387661234	0.321131554
 T_Neotropical_Mammalia_pops.txt	4	0.127987201	0.321131554
-T_Neotropical_Herps_pops.txt	4	0.484351565	0.321131554
 T_Nearctic_Aves_pops.txt	5	0.376366476	0.061683203
 T_Nearctic_Mammalia_pops.txt	5	0.249869859	0.061683203
-T_Nearctic_Herps_pops.txt	5	0.373763665	0.061683203
+
