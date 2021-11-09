@@ -1,0 +1,2 @@
+"FileName"	"Group"	"Weighting"
+"Infiles/FW_Afrotropical_Herps2_pops.txt"	1	1
