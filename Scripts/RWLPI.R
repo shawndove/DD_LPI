@@ -161,7 +161,6 @@ colnames(LPI_full) <- gsub("X", "", colnames(LPI_full))
 
 firstyear <- 1950 # first year of data
 startyear <- 1970 # first year of data to use for index
-#endyear <- 2015 # final year of data
 endyear <- 2015 # final year of data
 m_colnames <- as.character(startyear:endyear) # index years/column names
 m_colnames2 <- as.character(firstyear:endyear) # index years/column names
@@ -176,7 +175,7 @@ LPI_trimmed <- LPI_full[,which(colnames(LPI_full) %in% (firstyear:endyear))]
 LPI_trimmed <- as.data.frame(sapply(LPI_trimmed, as.numeric))
 
 # create a population ID column by assigning each population a separate ID based on its row number
-LPI_trimmed$PopID <- LPI_trimmed$ID
+LPI_trimmed$PopID <- LPI_full$ID
 
 # create a species ID column by assigning each unique species a separate ID number
 LPI_trimmed$SpecID <- match(LPI_full$Binomial, unique(LPI_full$Binomial))
@@ -400,8 +399,7 @@ for (i in 1:length(model_pop_list)) {
   # remove all populations with less than 2 data points
   group_data_culled <- cull_fn(group_data, 2, 2, c2)
   
-  # log-linear interpolate populations shorter than 6 years, without forecasting
-  # populations 6 years or longer will be interpolated with a GAM in the next step
+  # log-linear interpolate all pops
   grp_completed <- complete_time_series(group_data_culled, c2, m_colnames2, calcsd=TRUE)
   
   if (nrow(grp_completed) >=1) {
@@ -857,21 +855,21 @@ m_SoTeAnt_Fish <- LPIMain("Infiles/m_SoTeAnt_Fish_infile.txt", REF_YEAR = 1970, 
 m_TroSubIndo_Fish <- LPIMain("Infiles/m_TroSubIndo_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
 m_PaNoTemp_Fish <- LPIMain("Infiles/m_PaNoTemp_Fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=0)
 
-
-t_mam_lpi  <- LPIMain("Infiles/terrestrial_mammals_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=1)
-fw_mam_lpi  <- LPIMain("Infiles/freshwater_mammals_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=1)
-fw_herps_lpi  <- LPIMain("Infiles/freshwater_herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=1)
-fw_fish_lpi  <- LPIMain("Infiles/freshwater_fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=1)
+# there is an issue with complex infiles being located outside of the project directory...
+t_mam_lpi  <- LPIMain("terrestrial_mammals_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=1)
+fw_mam_lpi  <- LPIMain("freshwater_mammals_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=1)
+fw_herps_lpi  <- LPIMain("freshwater_herps_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=1)
+fw_fish_lpi  <- LPIMain("freshwater_fish_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=0, use_weightings_B=1)
 setwd("Infiles")
 terrestrial_lpi <- LPIMain("terrestrial_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=1)
-freshwater_lpi <- LPIMain("Infiles/freshwater_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=1)
-marine_lpi <- LPIMain("Infiles/marine_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=1)
+freshwater_lpi <- LPIMain("freshwater_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=1)
+marine_lpi <- LPIMain("marine_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=1)
 full_lpi <- LPIMain("lpi_infile.txt", REF_YEAR = 1970, PLOT_MAX = 100, force_recalculation=1, use_weightings=1, use_weightings_B=1)
 
-terrestrial_model_lpi <- LPIMain("Infiles/terrestrial_model_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
-freshwater_model_lpi <- LPIMain("Infiles/freshwater_model_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
-marine_model_lpi <- LPIMain("Infiles/marine_model_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
-full_model_lpi <- LPIMain("Infiles/lpi_model_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
+terrestrial_model_lpi <- LPIMain("terrestrial_model_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
+freshwater_model_lpi <- LPIMain("freshwater_model_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
+marine_model_lpi <- LPIMain("marine_model_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
+full_model_lpi <- LPIMain("lpi_model_infile.txt", REF_YEAR = 1970, PLOT_MAX = 2018, BOOT_STRAP_SIZE = 100, force_recalculation=1, use_weightings=1, use_weightings_B=0)
 
 t_mam_lpi <- t_mam_lpi[complete.cases(t_mam_lpi), ]
 fw_mam_lpi <- fw_mam_lpi[complete.cases(fw_mam_lpi), ]

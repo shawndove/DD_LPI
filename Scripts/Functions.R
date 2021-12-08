@@ -1777,7 +1777,7 @@ group_index_fn <- function(grp_index.list, c, m_colnames, n=NA, n_boot=NA, weigh
 }
 
 # note: grouplevel = 1 to 4 for LPI, 1 to 3 for sampled LPI
-ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALSE, savedata=FALSE) {
+ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALSE, savedata=FALSE, grouplevel) {
   
   if (grouplevel==1) {
     
@@ -1822,29 +1822,35 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
     
     if (resample==FALSE) {
       
+      # check whether there is a species id column
       if ("SpecID" %in% colnames(index.matrix)) {
         
+        # if so, set the group flag to TRUE
         group<-TRUE
         
       } else {
         
+        # if not, set the group flag to FALSE
         group<-FALSE
         
       }
       
       if (group==TRUE) {
         
+        # check whether the data frame contains only a row of NAs (no data)
         if (nrow(index.matrix)==1 & !any(!is.na(index.matrix))) {
           
           # create matrix to hold confidence intervals
           grp_ci.list <- list()
           
+          # upper and lower confidence intervals will be the same as the index
           grp_samp_ci1 <- index.matrix[,1:c]
-          
           grp_samp_ci2 <- index.matrix[,1:c]
           
+          # bind the confidence intervals together into a data frame
           grp_samp_ci <- as.data.frame(rbind(grp_samp_ci1, grp_samp_ci2))
           
+          # add year column names
           colnames(grp_samp_ci) <- m_colnames
           
           # add a group id column
@@ -1860,6 +1866,8 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
           
         }
         
+        # if there is data...
+        
         # create vector of group ids
         grp_ids <- unique(index.matrix$GrpID)
         
@@ -1869,12 +1877,15 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
         # create list to hold completed group indices
         grp_ci.list <- list()
         
+        # if group flag is FALSE
       } else {
         
+        # group ID set to 1
         grp_ids <- 1
         
       }
       
+      # loop through groups
       for (grp in grp_ids) {
         
         if (group==TRUE) {
@@ -1882,8 +1893,10 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
           # select all species indices that belong to a particular group
           grp_specdata <- subset(index.matrix, GrpID==grp)
           
+          # if group flag is FALSE
         } else {
           
+          # select the whole dataset
           grp_specdata <- index.matrix
           
         }
@@ -1893,21 +1906,24 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
         # so we test if the final element of m_colnames is missing from the column names
         if (!(tail(m_colnames, 1) %in% colnames(grp_specdata))) {
           
-          # remove ID tags
+          # if they are already lambda values, remove ID tags
           grp_specdata1.4 <- grp_specdata[,1:(c-1)]
           
+          # if they are not already lambda values
         } else {
           
           # remove ID tags
           grp_specdata1.1 <- grp_specdata[,1:c]
           
+          # check if the lambda flag is set to TRUE (LPI mode)
           if (lambda==TRUE) {
             
-            # convert to lambda values
+            # if so, convert to lambda values
             grp_specdata1.2_pt1 <- grp_specdata1.1[,1:(ncol(grp_specdata1.1)-1)]
             grp_specdata1.2_pt2 <- grp_specdata1.1[,2:ncol(grp_specdata1.1)]
             grp_specdata1.3 <- grp_specdata1.2_pt2 / (grp_specdata1.2_pt1)
             
+            # if lambda flag is set to FALSE
           } else {
             
             # update variable name
@@ -1941,9 +1957,10 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
               # put NA into temp2 to avoid an empty vector
               temp2 <- NA
               
+              # if there are observed values
             } else {
               
-              # sample n observed values with replacement, where n is the number of observed values
+              # sample n observed values with replacement
               temp2 <- sample(temp, replace=TRUE)
               
             }
@@ -1953,6 +1970,7 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
             
           }
           
+          # if there are no weights
           if (is.na(weights)) {
             
             # take the mean of the natural log of the species lambdas
@@ -1960,26 +1978,30 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
             
           }
           
+          # if there are weights...
           # convert NaN values to NA
           grp_samp_temp1.4[is.nan(grp_samp_temp1.4)] <- NA
           
+          # if savedata flag is set to TRUE
           if (savedata==TRUE) {
             
             # add bootstrapped sample to list
             grp_samp_list[[i]] <- grp_samp_temp1.4
             
+            # if savedata flag is set to FALSE
           } else {
-            
             
             # back convert from log10
             grp_samp_temp1.5 <- 10^(grp_samp_temp1.4)
             
+            # if LPI mode is on
             if (lambda==TRUE) {
               
               # convert to index values
               grp_samp_temp1.7 <- append(grp_samp_temp1.5, 100, after = 0)
               grp_samp_temp1.8 <- cumprod(grp_samp_temp1.7)
               
+              # if LPI mode is off
             } else {
               
               # set each index to start at 100
@@ -1997,7 +2019,7 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
         # convert list to a data frame
         grp_samp <- do.call(rbind, grp_samp_list)
         
-        # proceed to next group level if grouplevel is greater than 1
+        # if savedata flag is set to TRUE
         if (savedata==TRUE) {
           
           # add years as column names
@@ -2006,11 +2028,13 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
           # restructure as a data frame
           grp_samp <- as.data.frame(grp_samp)
           
+          # if group flag is set to TRUE
           if (group==TRUE) {
             
             # add a group id column
             grp_samp$GrpID <- rep(grp_specdata$GrpID[1], times=nrow(grp_samp))
             
+            # add data frame to confidence interval list
             grp_ci.list[[counter1]] <- grp_samp
             
             # print information to show that a group index has been completed
@@ -2019,25 +2043,34 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
             # update counter
             counter1 <- counter1 + 1
             
+            # if this is the final group
             if (grp==tail(grp_ids, 1)) {
               
+              # exit the function
               return(grp_ci.list)
               
+              # if it is not the final group
             } else {
               
+              # proceed to the next group
               next
               
             }
             
+            # if group flag is set to FALSE
           } else{
             
+            # rename as confidence interval list
             grp_ci.list <- grp_samp
             
+            # exit function
             return(grp_ci.list)
             
           }
           
         }
+        
+        # if savedata is FALSE...
         
         # create matrix to hold confidence intervals
         grp_samp_ci <- matrix(NA, nrow=2, ncol=ncol(grp_samp))
@@ -2068,6 +2101,7 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
         # restructure as a data frame
         grp_samp_ci <- as.data.frame(grp_samp_ci)
         
+        # if group flag set to TRUE
         if (group==TRUE) {
           
           # add a group id column
@@ -2082,8 +2116,10 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
           # advance counter
           counter1 <- counter1 + 1
           
+          # if group flag is set to FALSE  
         } else {
           
+          # rename as confidence interval list
           grp_ci.list <- grp_samp_ci
           
           # print information to show that the msi has been completed
@@ -2093,22 +2129,30 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
         
       }
       
+      # exit function
       return(grp_ci.list)
       
+      # if resample is set to TRUE
     } else if (resample==TRUE) {
       
+      # load GET package
       library(GET)
       
+      # check for group ID column
       if ("GrpID" %in% colnames(index.matrix)) {
         
+        # if there is one, set group flag to TRUE
         group<-TRUE
         
+        # if there is not one
       } else {
         
+        # set group flag to FALSE
         group<-FALSE
         
       }
       
+      # if group flag set to TRUE
       if (group==TRUE) {
         
         # create matrix to hold confidence intervals
@@ -2123,24 +2167,30 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
         # create list to hold completed group indices
         grp_ci.list <- list()
         
+        # if group flag set to FALSE
       } else {
         
         # create matrix to hold confidence intervals
         grp_ci <- matrix(NA, nrow=2, ncol=ncol(index.matrix))
         
+        # set group id as 1
         grp_ids <- 1
         
       }
       
+      # loop through groups
       for (grp in grp_ids) {
         
+        # if group flag is set to TRUE
         if (group==TRUE) {
           
-          # select all species indices that belong to a particular group
+          # select all species indices that belong to a particular group, omitting NAs
           grp.data <- na.omit(subset(index.matrix, GrpID==grp)[,(1:ncol(index.matrix)-1)])
           
+          # if group flag is set to FALSE
         } else {
           
+          # select the whole dataset, omitting NAs
           grp.data <- na.omit(index.matrix)
           
         }
@@ -2180,6 +2230,7 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
         # restore column names
         colnames(grp_ci) <- m_colnames
         
+        # if group flag is set to TRUE
         if (group==TRUE) {
           
           # add a group id column
@@ -2194,8 +2245,10 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
           # update counter
           counter1 <- counter1 + 1
           
+          # if group flag is set to FALSE
         } else {
           
+          # rename as confidence interval list
           grp_ci.list <- grp_ci
           
           # print information to show that the msi has been completed
@@ -2210,18 +2263,38 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
       
     }
     
+    # if grouplevel is set to 2
   } else if (grouplevel==2) {
     
     # convert the list to a data frame
     index.matrix <- do.call(rbind, index)
     
+    # get group ids
     grp_ids <- unique(index.matrix$GrpID)
+    
+    # create matrix to hold sampled species lambdas/indices
+    grp_samp_list <- list()
+    
+    # check whether n is set to NA
+    if (!is.na(n)) {
+      
+      # if it isn't, set resample flag to TRUE
+      resample<-TRUE
+      
+    } else {
+      
+      # if it is, set resample flag to FALSE
+      resample<-FALSE
+      
+    }
     
     # if weights are provided
     if (!is.na(weights)) {
       
+      # check if the correct number of weights are provided
       if (length(weights) != length(grp_ids)) {
         
+        # if not, stop with an error message
         stop('Length of weightings vector does not match number of indices to weight.', call.=FALSE)
         
       }
@@ -2232,63 +2305,208 @@ ci_fn <- function(index, c, m_colnames, boots=100, n=NA, weights=NA, lambda=FALS
       # apply weighting to the group lambdas
       for (i in 1:length(grp_ids)) {
         
+        # copy all rows from the group
         temp <- index.matrix[index.matrix$GrpID %in% grp_ids[i],]
         
+        # weight the rows
         temp2 <- temp[,1:c] * weights[i]
         
+        # add weighted rows to list
         w_grpdata[[i]] <- temp2
         
       }
       
+      
+      # bind list into a dataframe
       w_grpdata.df <- do.call(rbind, w_grpdata)
       
-      # create a new matrix in wide format, so column means can be used
-      w_grpdata.df2 <- matrix(w_grpdata.df, nrow=length(grp_ids), 
-                              ncol=(ncol(w_grpdata.df) * nrow(w_grpdata.df) / length(grp_ids)), byrow=TRUE)
-      
-      # take the column means. the .colSums function requires extra information but is very fast
-      w_grpdata.df3 <- .colSums(w_grpdata.df2, nrow(w_grpdata.df2), ncol(w_grpdata.df2), na.rm=TRUE)
-      
-      # convert back to long format, with a species index in each row
-      w_grpdata.df4 <- matrix(w_grpdata.df3, nrow = (nrow(w_grpdata.df) / length(grp_ids)), ncol = ncol(w_grpdata.df), byrow=TRUE)
+      if (resample==TRUE) {
+        
+        # create a new matrix in wide format, so column sums can be used
+        w_grpdata.df2 <- matrix(w_grpdata.df, nrow=length(grp_ids), 
+                                ncol=(ncol(w_grpdata.df) * nrow(w_grpdata.df) / length(grp_ids)), byrow=TRUE)
+        
+        # take the column sums. the .colSums function requires extra information but is very fast
+        w_grpdata.df3 <- .colSums(w_grpdata.df2, nrow(w_grpdata.df2), ncol(w_grpdata.df2), na.rm=TRUE)
+        
+        # convert back to long format, with a species index in each row
+        w_grpdata.df4 <- matrix(w_grpdata.df3, nrow = (nrow(w_grpdata.df) / length(grp_ids)), ncol = ncol(w_grpdata.df), byrow=TRUE)
+        
+      } else {
+        
+        # update name and convert to matrix
+        w_grpdata.df4 <- matrix(w_grpdata.df)
+        
+      }
       
       # convert NaN values to NA
       w_grpdata.df4[is.nan(w_grpdata.df4)] <- NA
       
+      # if no weights are provided
+    } else {
       
-      if (savedata==TRUE) {
+      # check if these are already lambda values
+      # if they are, there will be one less column than in m_colnames
+      # so we test if the final element of m_colnames is missing from the column names
+      if (!(tail(m_colnames, 1) %in% colnames(index.matrix))) {
         
-        # add bootstrapped sample to list
-        grp_samp_list[[i]] <- grp_samp_temp1.4
+        # copy unweighted dataframe as a matrix
+        w_grpdata.df <- as.matrix(index.matrix[,1:(c-1)])
         
       } else {
         
+        # copy unweighted dataframe as a matrix
+        w_grpdata1.1 <- as.matrix(index.matrix[,1:c])
         
-        # back convert from log10
-        grp_samp_temp1.5 <- 10^(grp_samp_temp1.4)
-        
+        # check if the lambda flag is set to TRUE (LPI mode)
         if (lambda==TRUE) {
           
-          # convert to index values
-          grp_samp_temp1.7 <- append(grp_samp_temp1.5, 100, after = 0)
-          grp_samp_temp1.8 <- cumprod(grp_samp_temp1.7)
+          # if so, convert to lambda values
+          w_grpdata1.2_pt1 <- w_grpdata1.1[,1:(ncol(w_grpdata1.1)-1)]
+          w_grpdata1.2_pt2 <- w_grpdata1.1[,2:ncol(w_grpdata1.1)]
+          w_grpdata1.3 <- w_grpdata1.2_pt2 / (w_grpdata1.2_pt1)
           
+          # if lambda flag is set to FALSE
         } else {
           
-          # set each index to start at 100
-          grp_samp_temp1.8 <- (grp_samp_temp1.5 / grp_samp_temp1.5[1] * 100)
+          # update variable name
+          w_grpdata1.3 <- w_grpdata1.1
           
         }
+        
+        # convert to log10
+        w_grpdata.df <- log10(w_grpdata1.3)
         
       }
       
     }
     
+    
+    if (resample==TRUE) {
+      
+      # create a new matrix in wide format, so column means can be used
+      w_grpdata.df2 <- matrix(w_grpdata.df, nrow=length(grp_ids), 
+                              ncol=(ncol(w_grpdata.df) * nrow(w_grpdata.df) / length(grp_ids)), byrow=TRUE)
+      
+      # take the column sums. the .colMeans function requires extra information but is very fast
+      w_grpdata.df3 <- .colMeans(w_grpdata.df2, nrow(w_grpdata.df2), ncol(w_grpdata.df2), na.rm=TRUE)
+      
+      # convert back to long format, with a species index in each row
+      w_grpdata.df4 <- matrix(w_grpdata.df3, nrow = (nrow(w_grpdata.df) / length(grp_ids)), ncol = ncol(w_grpdata.df), byrow=TRUE)
+      
+    } else {
+      
+      # update name
+      w_grpdata.df4 <- w_grpdata.df
+      
+    }
+    
+    # convert NaN values to NA
+    w_grpdata.df4[is.nan(w_grpdata.df4)] <- NA
+    
+    # }
+    
+    # if savedata flag set to TRUE
+    if (savedata==TRUE) {
+      
+      # add bootstrapped sample to list
+      grp_samp_list[[i]] <- w_grpdata.df4
+      
+      # if savedata flag set to FALSE
+    } else {
+      
+      # back convert from log10
+      grp_samp_temp1.5 <- 10^(w_grpdata.df4)
+      
+      # if lambda flag set to TRUE (lpi method)
+      if (lambda==TRUE) {
+        
+        # create a single-column matrix of 100s for later conversion to index values
+        first_col <- matrix(100, nrow = nrow(grp_samp_temp1.5), ncol = 1)
+        
+        # convert to index values
+        grp_samp_temp1.7 <- cbind(first_col, grp_samp_temp1.5)
+        grp_samp_temp1.8 <- rowCumprods(grp_samp_temp1.7)
+        
+        # convert to index values
+        #grp_samp_temp1.7 <- append(grp_samp_temp1.5, 100, after = 0)
+        #grp_samp_temp1.8 <- cumprod(grp_samp_temp1.7)
+        
+        # if lambda flag set to FALSE
+      } else {
+        
+        # set each index to start at 100
+        grp_samp_temp1.8 <- (grp_samp_temp1.5 / grp_samp_temp1.5[1] * 100)
+        
+      }
+      
+      # add bootstrapped sample to list
+      grp_samp_list[[i]] <- grp_samp_temp1.8
+      
+    }
+    
+    # convert list to a data frame
+    grp_samp <- do.call(rbind, grp_samp_list)
+    
+    # if savedata flag is set to TRUE
+    if (savedata==TRUE) {
+      
+      # add years as column names
+      colnames(grp_samp) <- m_colnames
+      
+      # restructure as a data frame
+      grp_samp <- as.data.frame(grp_samp)
+      
+      # rename as confidence interval list
+      grp_ci.list <- grp_samp
+      
+      # exit function
+      return(grp_ci.list)
+      
+    }
+    
+    # if savedata is FALSE...
+    
+    # create matrix to hold confidence intervals
+    grp_samp_ci <- matrix(NA, nrow=2, ncol=ncol(grp_samp))
+    
+    # loop to get confidence intervals for each year
+    for (i in 1:ncol(grp_samp)) {
+      
+      # order the index values for year i
+      temp <- sort(as.vector(grp_samp[,i]))
+      
+      # get the lower bound for year i
+      lower_bound <- quantile(temp, 0.025, names=FALSE)
+      
+      # get the upper bound for year i
+      upper_bound <- quantile(temp, 0.975, names=FALSE)
+      
+      # put the lower bounding confidence interval into the matrix
+      grp_samp_ci[1,i] <- lower_bound
+      
+      # put the upper bounding confidence interval into the matrix
+      grp_samp_ci[2,i] <- upper_bound
+      
+    }
+    
+    # add years as column names
+    colnames(grp_samp_ci) <- m_colnames
+    
+    # restructure as a data frame
+    grp_samp_ci <- as.data.frame(grp_samp_ci)
+    
+    # rename as confidence interval list
+    grp_ci.list <- grp_samp_ci
+    
+    # print information to show that the msi has been completed
+    print(paste("completed confidence intervals for msi"))
+    
+    return(grp_ci.list)
+    
   }
   
 }
-
-
 
 # function, with x and y as time series, and alpha as moving avg window length
 devdist <- function(x, y, alpha=10) {
@@ -2492,23 +2710,24 @@ remove_vals_fn <- function(all_pops_index, c, rmin=0.65, rmax=0.95) {
 degrade_ts_fn <- function(all_pops_index, c, mlength=10, numobs=5) {
   
   # create a Poisson distribution around the mean length of time series
-  length_dist <- rpois(100, mlength)
+  # restricted between 2 and the starting length of the t.s.
+  length_dist <- rpois(1000, mlength)
   
   # create a Poisson distribution around the mean number of observations of t.s.
-  numobs_dist <- rpois(100, numobs)
+  # restricted between 2 and the new mean length of t.s.
+  numobs_dist <- rpois(1000, numobs)
   
   # loop through time series
   for (i in 1:nrow(all_pops_index)) {
     
     # randomly set length of time series from Poisson distribution
-    length_ts <- sample(length_dist, 1)
+    length_ts <- sample(length_dist[(length_dist>=2) & (length_dist<=c)], 1)
     
     # randomly set number of observations of t.s. from Poisson distribution,
-    # restricted between 2 and the length of the t.s.
-    numobs_ts <- sample(numobs_dist[numobs_dist>=2 & numobs_dist<=length_ts], 1)
+    numobs_ts <- sample(numobs_dist[(numobs_dist>=2) & (numobs_dist<=length_ts)], 1)
     
     #randomly set start year for the t.s. based on length
-    start_ts_year <- sample(1:(c-length_ts), 1)
+    start_ts_year <- sample(1:(c-length_ts+1), 1)
     
     #calculate end year for the t.s. based on start year and length
     end_ts_year <- start_ts_year + length_ts - 1
@@ -2520,7 +2739,7 @@ degrade_ts_fn <- function(all_pops_index, c, mlength=10, numobs=5) {
     remove_obs <- length_ts - numobs_ts
     
     # degrade time series to the randomly selected number of observations
-    cut_ts[sample(cut_ts, remove_obs)] <- NA 
+    cut_ts[which(cut_ts %in% sample(cut_ts, remove_obs))] <- NA
     
     # fill time series with NAs
     all_pops_index[i,1:c] <- NA

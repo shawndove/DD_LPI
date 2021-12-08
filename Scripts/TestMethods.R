@@ -41,7 +41,7 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
     # populations 6 years or longer will be interpolated with a GAM in the next step
     # if method is set to nores, populations will be forecast as well
     new.grp_data <- complete_time_series(grp_data_culled, c, m_colnames, lambda=FALSE)
-    saveRDS(new.grp_data, file=paste("saved_synth_", iter_num, "_completed_time_series_", method, ".RData", sep=""))
+    saveRDS(new.grp_data, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_completed_time_series_", method, ".RData", sep=""))
     
     cat(paste0("GAMing populations for the ", method, " method.\n"))
     
@@ -57,7 +57,7 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
     # log-linear interpolate populations shorter than 6 years
     # populations 6 years or longer will be interpolated with a GAM in the next step
     new.grp_data <- complete_time_series(grp_data_culled, c, m_colnames, lambda=TRUE)
-    saveRDS(new.grp_data, file=paste("saved_synth_", iter_num, "_completed_time_series_", method, ".RData", sep=""))
+    saveRDS(new.grp_data, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_completed_time_series_", method, ".RData", sep=""))
     
     cat(paste0("GAMing populations for the ", method, " method.\n"))
     
@@ -78,7 +78,7 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
     # log-linear interpolate populations shorter than 6 years
     # populations 6 years or longer will be interpolated with a GAM in the next step
     new.grp_data <- complete_time_series(grp_data_culled, c, m_colnames, lambda=TRUE)
-    saveRDS(new.grp_data, file=paste("saved_synth_", iter_num, "_completed_time_series_", method, ".RData", sep=""))
+    saveRDS(new.grp_data, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_completed_time_series_", method, ".RData", sep=""))
     
     cat(paste0("GAMing populations for the ", method, " method.\n"))
     
@@ -112,7 +112,7 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
   
   # create species indices from the population indices
   full_spec_index <- species_index_fn(gam_popmat, c, n=n, n_boot=n_boot, lambda=lambda, resample=resample)
-  saveRDS(full_spec_index, file=paste("saved_synth_", iter_num, "_species_indices_", method, ".RData", sep=""))
+  saveRDS(full_spec_index, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_species_indices_", method, ".RData", sep=""))
   
   print(paste("All species indices for", method, "method complete."))
   
@@ -122,7 +122,7 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
   
   # create group indices from the species indices
   grp_full <- group_index_fn(full_spec_index, c, m_colnames, n=n, n_boot=n_boot)
-  saveRDS(grp_full, file=paste("saved_synth_", iter_num, "_group_indices_", method, ".RData", sep=""))
+  saveRDS(grp_full, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_group_indices_", method, ".RData", sep=""))
   
   print(paste("All group indices for", method, "method complete."))
   
@@ -130,7 +130,7 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
   
   # create multi species indices from the group indices
   msi_full <- group_index_fn(grp_full, c, m_colnames, n=n, n_boot=n_boot)
-  saveRDS(msi_full, file=paste("saved_synth_", iter_num, "_msi_", method, ".RData", sep=""))
+  saveRDS(msi_full, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_msi_", method, ".RData", sep=""))
   
   print(paste("Final MSI for", method, "method complete."))
   
@@ -141,11 +141,11 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
       temp <- as.data.frame(t(colMeans(i[,1:c], na.rm=TRUE)))
       temp$GrpID <- i[1,]$GrpID
       i <- temp})
-    saveRDS(grp_full, file=paste("saved_synth_", iter_num, "_group_final_", method, ".RData", sep=""))
+    saveRDS(grp_full, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_group_final_", method, ".RData", sep=""))
     
     # create final msi as mean of all msi bootstraps
     msi_final <- colMeans(msi_full, na.rm=TRUE)
-    saveRDS(msi_full, file=paste("saved_synth_", iter_num, "_msi_final_", method, ".RData", sep=""))
+    saveRDS(msi_full, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_msi_final_", method, ".RData", sep=""))
     
   } else {
     
@@ -158,21 +158,21 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
   if (method=="lr" | method=="my") {
     
     # create confidence intervals for the group indices
-    grp_ci_full <- ci_fn(grp_full, c, m_colnames, n=n, lambda=lambda)
-    saveRDS(grp_ci_full, file=paste("saved_synth_", iter_num, "_group_ci_", method, ".RData", sep=""))
+    grp_ci_full <- ci_fn(grp_full, c, m_colnames, n=n, lambda=lambda, grouplevel=1)
+    saveRDS(grp_ci_full, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_group_ci_", method, ".RData", sep=""))
     
     print(paste("All group confidence intervals for", method, "method complete."))
     
     # create final confidence intervals
-    msi_ci_full <- ci_fn(msi_full, c, m_colnames, n=n, lambda=lambda)
-    saveRDS(msi_ci_full, file=paste("saved_synth_", iter_num, "_msi_ci_", method, ".RData", sep=""))
+    msi_ci_full <- ci_fn(msi_full, c, m_colnames, n=n, lambda=lambda, grouplevel=1)
+    saveRDS(msi_ci_full, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_msi_ci_", method, ".RData", sep=""))
     
     print(paste("MSI confidence intervals for", method, "method complete."))
     
   } else if (method=="lambda" | method=="lambda2") {
     
-    grp_ci_full <- ci_fn(full_spec_index, c, m_colnames, lambda=TRUE)
-    saveRDS(grp_ci_full, file=paste("saved_synth_", iter_num, "_group_ci_", method, ".RData", sep=""))
+    grp_ci_full <- ci_fn(full_spec_index, c, m_colnames, lambda=TRUE, grouplevel=1)
+    saveRDS(grp_ci_full, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_group_ci_", method, ".RData", sep=""))
     
     print(paste("All group confidence intervals for", method, "method complete."))
     
@@ -180,21 +180,21 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
     grp_lambda <- group_index_fn(full_spec_index, c, m_colnames, n=n, n_boot=n_boot, stay_lambda=TRUE)
     
     # create final confidence intervals
-    msi_ci_full <- ci_fn(grp_lambda, c, m_colnames, lambda=TRUE)
-    saveRDS(msi_ci_full, file=paste("saved_synth_", iter_num, "_msi_ci_", method, ".RData", sep=""))
+    msi_ci_full <- ci_fn(grp_lambda, c, m_colnames, lambda=TRUE, grouplevel=1)
+    saveRDS(msi_ci_full, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_msi_ci_", method, ".RData", sep=""))
     
     print(paste("MSI confidence intervals for", method, "method complete."))
     
   } else if (method=="nores") {
     
-    grp_ci_full <- ci_fn(full_spec_index, c, m_colnames, lambda=TRUE)
-    saveRDS(grp_ci_full, file=paste("saved_synth_", iter_num, "_group_ci_", method, ".RData", sep=""))
+    grp_ci_full <- ci_fn(full_spec_index, c, m_colnames, lambda=TRUE, grouplevel=1)
+    saveRDS(grp_ci_full, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_group_ci_", method, ".RData", sep=""))
     
     print(paste("All group confidence intervals for", method, "method complete."))
     
     # create confidence intervals for the multi species indices
-    msi_ci_full <- ci_fn(grp_full, c, m_colnames, lambda=TRUE)
-    saveRDS(msi_ci_full, file=paste("saved_synth_", iter_num, "_msi_ci_", method, ".RData", sep=""))
+    msi_ci_full <- ci_fn(grp_full, c, m_colnames, lambda=TRUE, grouplevel=1)
+    saveRDS(msi_ci_full, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_msi_ci_", method, ".RData", sep=""))
     
     print(paste("MSI confidence intervals for", method, "method complete."))
     
@@ -279,10 +279,10 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
     if (method=="lr" | method=="my") {
       
       # create group confidence intervals
-      grp_ci <- ci_fn(grp_samp, c, m_colnames, n=n, lambda=lambda)
+      grp_ci <- ci_fn(grp_samp, c, m_colnames, n=n, lambda=lambda, grouplevel=1)
       
       # create msi confidence intervals
-      msi_ci <- ci_fn(msi_samp, c, m_colnames, n=n, lambda=lambda)
+      msi_ci <- ci_fn(msi_samp, c, m_colnames, n=n, lambda=lambda, grouplevel=1)
       
     } else if (method=="lambda" | method=="lambda2") {
       
@@ -290,18 +290,18 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
       grp_lambda_samp <- group_index_fn(spec_samp, c, m_colnames, n=n, n_boot=n_boot, stay_lambda=TRUE)
       
       # create group confidence intervals
-      grp_ci <- ci_fn(spec_samp, c, m_colnames, lambda=TRUE)
+      grp_ci <- ci_fn(spec_samp, c, m_colnames, lambda=TRUE, grouplevel=1)
       
       # create msi confidence intervals
-      msi_ci <- ci_fn(grp_lambda_samp, c, m_colnames, lambda=TRUE)
+      msi_ci <- ci_fn(grp_lambda_samp, c, m_colnames, lambda=TRUE, savedata=FALSE, grouplevel=1)
       
     } else if (method=="nores") {
       
       # create group confidence intervals
-      grp_ci <- ci_fn(spec_samp, c, m_colnames, lambda=TRUE)
+      grp_ci <- ci_fn(spec_samp, c, m_colnames, lambda=TRUE, grouplevel=1)
       
       # create msi confidence intervals
-      msi_ci <- ci_fn(grp_samp, c, m_colnames, lambda=TRUE)
+      msi_ci <- ci_fn(grp_samp, c, m_colnames, lambda=TRUE, grouplevel=1)
       
     }
     
@@ -332,116 +332,116 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
   }
   
   # save all the sampled data
-  saveRDS(grp_samp_list, file=paste("saved_synth_", iter_num, "_grpi_sampled_list_", samp_size, "_", method, ".RData", sep=""))
-  saveRDS(grp_ci_list, file=paste("saved_synth_", iter_num, "_grpi_sampled_list_ci_", samp_size, "_", method, ".RData", sep=""))
-  saveRDS(msi_samp_list, file=paste("saved_synth_", iter_num, "_msi_sampled_list_", samp_size, "_", method, ".RData", sep=""))
-  saveRDS(msi_ci_list, file=paste("saved_synth_", iter_num, "_msi_sampled_list_ci_", samp_size, "_", method, ".RData", sep=""))
-  saveRDS(grp_final_samp_list, file=paste("saved_synth_", iter_num, "_grpi_final_sampled_list_", samp_size, "_", method, ".RData", sep=""))
-  saveRDS(msi_final_samp_list, file=paste("saved_synth_", iter_num, "_msi_final_sampled_list_", samp_size, "_", method, ".RData", sep=""))
+  saveRDS(grp_samp_list, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_grpi_sampled_list_", samp_size, "_", method, ".RData", sep=""))
+  saveRDS(grp_ci_list, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_grpi_sampled_list_ci_", samp_size, "_", method, ".RData", sep=""))
+  saveRDS(msi_samp_list, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_msi_sampled_list_", samp_size, "_", method, ".RData", sep=""))
+  saveRDS(msi_ci_list, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_msi_sampled_list_ci_", samp_size, "_", method, ".RData", sep=""))
+  saveRDS(grp_final_samp_list, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_grpi_final_sampled_list_", samp_size, "_", method, ".RData", sep=""))
+  saveRDS(msi_final_samp_list, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_msi_final_sampled_list_", samp_size, "_", method, ".RData", sep=""))
   
   
   # test how much the trend being tested deviates from the real trend
-  trend.dev <- EuclideanDistance(msi_final, msi_real)
-  write.csv(trend.dev, file=paste("saved_synth_", iter_num, "_trend_dev_full_", method, ".csv", sep=""))
+  trend.dev <- EuclideanDistance(as.numeric(msi_final), as.numeric(msi_real))
+  write.csv(trend.dev, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_trend_dev_full_", method, ".csv", sep=""))
   
   # test how much the group trend being tested deviate from the real trend
-  trend.dev.grp.list <- lapply(1:length(grp_final), function(i) {EuclideanDistance(grp_final[[i]][,1:c], grp_real[[i]][,1:c])})
+  trend.dev.grp.list <- lapply(1:length(grp_final), function(i) {if(anyNA(i)) {NA} else {EuclideanDistance(as.numeric(grp_final[[i]][,1:c]), as.numeric(grp_real[[i]][,1:c]))}})
   trend.dev.grp <- as.vector(do.call(rbind, trend.dev.grp.list))
-  write.csv(trend.dev.grp, file=paste("saved_synth_", iter_num, "_trend_dev_grp_full_", method, ".csv", sep=""))
+  write.csv(trend.dev.grp, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_trend_dev_grp_full_", method, ".csv", sep=""))
   
   # test how much of the real trend is within the confidence intervals of the trend being tested
   within.ci <- real_trend_within_ci_fn(msi_ci_full, msi_real)
-  write.csv(within.ci, file=paste("saved_synth_", iter_num, "_within_ci_full_", method, ".csv", sep=""))
+  write.csv(within.ci, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_within_ci_full_", method, ".csv", sep=""))
   
   # test how much of the real trend is within the confidence intervals of the group trends being tested
   within.grp.ci <- lapply(1:length(grp_ci_full), function(i) {real_trend_within_ci_fn(grp_ci_full[[i]][,1:c], grp_real[[i]][,1:c])})
   within.grp <- as.vector(do.call(rbind, within.grp.ci))
-  write.csv(within.grp, file=paste("saved_synth_", iter_num, "_within_grp_ci_full_", method, ".csv", sep=""))
+  write.csv(within.grp, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_within_grp_ci_full_", method, ".csv", sep=""))
   
   # check the width of the confidence intervals
   ci.width <- ci_width_fn(msi_ci_full, c)
-  write.csv(ci.width, file=paste("saved_synth_", iter_num, "_ci_width_", method, ".csv", sep=""))
+  write.csv(ci.width, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_ci_width_", method, ".csv", sep=""))
   
   # check the width of the group confidence intervals
   ci.grp.width <- lapply(grp_ci_full, function(i) {ci_width_fn(i, c)})
   grp.width <- as.vector(do.call(rbind, ci.grp.width))
-  write.csv(grp.width, file=paste("saved_synth_", iter_num, "_ci_grp_width_", method, ".csv", sep=""))
+  write.csv(grp.width, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_ci_grp_width_", method, ".csv", sep=""))
   
   # test how much the sampled trends deviate from the real trend
-  trend.dev.list <- lapply(msi_final_samp_list, function(i) {EuclideanDistance(i, msi_real)})
+  trend.dev.list <- lapply(msi_final_samp_list, function(i) {if(anyNA(i)) {NA} else {EuclideanDistance(as.numeric(i), as.numeric(msi_real))}})
   trend.dev.matrix <- do.call(rbind, trend.dev.list)
   colnames(trend.dev.matrix) <- "MSI"
-  write.csv(trend.dev.matrix, file=paste("saved_synth_", iter_num, "_trend_dev_sampled_list_", method, ".csv", sep=""))
+  write.csv(trend.dev.matrix, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_trend_dev_sampled_list_", method, ".csv", sep=""))
   
   mean.trend.dev <- mean(trend.dev.matrix, na.rm=TRUE)
-  write.csv(mean.trend.dev, file=paste("saved_synth_", iter_num, "_trend_dev_sampled_mean_", method, ".csv", sep=""))
+  write.csv(mean.trend.dev, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_trend_dev_sampled_mean_", method, ".csv", sep=""))
   
   # test how much the sampled group trends deviate from the real trend
-  trend.grp.dev.list <- lapply(grp_final_samp_list, function(i) {lapply(1:length(i), function(j) {EuclideanDistance(i[[j]][,1:c], grp_real[[j]][,1:c])})})
+  trend.grp.dev.list <- lapply(grp_final_samp_list, function(i) {lapply(1:length(i), function(j) {if(anyNA(i)) {NA} else {EuclideanDistance(as.numeric(i[[j]][,1:c]), as.numeric(grp_real[[j]][,1:c]))}})})
   trend.grp.dev <- as.data.frame(do.call(rbind, trend.grp.dev.list))
   colnames(trend.grp.dev) <- gsub("V", "Grp", colnames(trend.grp.dev))
-  write.csv(as.matrix(trend.grp.dev), file=paste("saved_synth_", iter_num, "_trend_dev_grp_sampled_list_", method, ".csv", sep=""))
+  write.csv(as.matrix(trend.grp.dev), file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_trend_dev_grp_sampled_list_", method, ".csv", sep=""))
   
   trend.grp.dev.temp <- as.vector(do.call(rbind, do.call(rbind, trend.grp.dev.list)))
   mean.trend.grp.dev <- vector()
   for (i in 1:length(grp_final)) {
     mean.trend.grp.dev[i] <- mean(trend.grp.dev.temp[((i*bootstrap_size)-bootstrap_size+1):(i*bootstrap_size)], na.rm=TRUE)
   }
-  write.csv(mean.trend.grp.dev, file=paste("saved_synth_", iter_num, "_trend_dev_grp_sampled_mean_", method, ".csv", sep=""))
+  write.csv(mean.trend.grp.dev, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_trend_dev_grp_sampled_mean_", method, ".csv", sep=""))
   
   # test how much of the real trend is within the confidence intervals of the sampled trends
   within.ci.list <- lapply(msi_ci_list, real_trend_within_ci_fn, msi_real)
   within.ci.matrix <- do.call(rbind, within.ci.list)
   colnames(within.ci.matrix) <- "MSI"
-  write.csv(within.ci.matrix, file=paste("saved_synth_", iter_num, "_within_ci_sampled_list_", method, ".csv", sep=""))
+  write.csv(within.ci.matrix, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_within_ci_sampled_list_", method, ".csv", sep=""))
   
   mean.within.ci <- mean(within.ci.matrix, na.rm=TRUE)
-  write.csv(mean.within.ci, file=paste("saved_synth_", iter_num, "_within_ci_sampled_mean_", method, ".csv", sep=""))
+  write.csv(mean.within.ci, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_within_ci_sampled_mean_", method, ".csv", sep=""))
   
   # test how much of the real trend is within the confidence intervals of the sampled group trends
   within.ci.grp.list <- lapply(grp_ci_list, function(i) {lapply(1:length(i), function(j) {real_trend_within_ci_fn(i[[j]][,1:c], grp_real[[j]][,1:c])})})
   within.ci.grp <- as.data.frame(do.call(rbind, within.ci.grp.list))
   colnames(within.ci.grp) <- gsub("V", "Grp", colnames(within.ci.grp))
-  write.csv(as.matrix(within.ci.grp), file=paste("saved_synth_", iter_num, "_within_ci_grp_sampled_list_", method, ".csv", sep=""))
+  write.csv(as.matrix(within.ci.grp), file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_within_ci_grp_sampled_list_", method, ".csv", sep=""))
   
   within.ci.grp.temp <- as.vector(do.call(rbind, do.call(rbind, within.ci.grp.list)))
   mean.within.grp.ci <- vector()
   for (i in 1:length(grp_final)) {
     mean.within.grp.ci[i] <- mean(within.ci.grp.temp[((i*bootstrap_size)-(bootstrap_size)+1):(i*bootstrap_size)], na.rm=TRUE)
   }
-  write.csv(mean.within.grp.ci, file=paste("saved_synth_", iter_num, "_within_ci_grp_sampled_mean_", method, ".csv", sep=""))
+  write.csv(mean.within.grp.ci, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_within_ci_grp_sampled_mean_", method, ".csv", sep=""))
   
   # check the width of the confidence intervals of the sampled trends
   ci.width.list <- lapply(msi_ci_list, ci_width_fn, c)
   ci.width.matrix <- do.call(rbind, ci.width.list)
   colnames(ci.width.matrix) <- "MSI"
-  write.csv(ci.width.matrix, file=paste("saved_synth_", iter_num, "_ci_width_sampled_list_", method, ".csv", sep=""))
+  write.csv(ci.width.matrix, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_ci_width_sampled_list_", method, ".csv", sep=""))
   
   mean.ci.width <- mean(ci.width.matrix, na.rm=TRUE)
-  write.csv(mean.ci.width, file=paste("saved_synth_", iter_num, "_ci_width_sampled_mean_", method, ".csv", sep=""))
+  write.csv(mean.ci.width, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_ci_width_sampled_mean_", method, ".csv", sep=""))
   
   # check the width of the confidence intervals of the sampled group trends
   ci.width.grp.list <- lapply(grp_ci_list, function(i) {lapply(i, ci_width_fn, c)})
   ci.width.grp <- as.data.frame(do.call(rbind, ci.width.grp.list))
   colnames(ci.width.grp) <- gsub("V", "Grp", colnames(ci.width.grp))
-  write.csv(as.matrix(ci.width.grp), file=paste("saved_synth_", iter_num, "_ci_width_grp_sampled_list_", method, ".csv", sep=""))
+  write.csv(as.matrix(ci.width.grp), file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_ci_width_grp_sampled_list_", method, ".csv", sep=""))
   
   ci.width.grp.temp <- do.call(rbind, do.call(rbind, ci.width.grp.list))
   mean.ci.grp.width <- vector()
   for (i in 1:length(grp_final)) {
     mean.ci.grp.width[i] <- mean(ci.width.grp.temp[((i*bootstrap_size)-(bootstrap_size)+1):(i*bootstrap_size)], na.rm=TRUE)
   }
-  write.csv(mean.ci.grp.width, file=paste("saved_synth_", iter_num, "_ci_width_grp_sampled_mean_", method, ".csv", sep=""))
+  write.csv(mean.ci.grp.width, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_ci_width_grp_sampled_mean_", method, ".csv", sep=""))
   
   # plot trend
   plot_msi <- msi_final
   plot_ci <- msi_ci_full
   
-  png(file=paste("saved_synth_", iter_num, "_msi_", method, ".png", sep=""),
+  png(file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_msi_", method, ".png", sep=""),
       width = 1280, height = 720, units = "px", pointsize = 12, bg = "white")
   
   par(mar=c(6,6,6,2) + 0.1)
-  plot(m_colnames, plot_msi, xlab="", ylab="", type="l", lty=1,  ylim=c(0,max(c(200, max(plot_ci, na.rm=TRUE)+10))), lwd=3, frame.plot=TRUE,
+  plot(m_colnames, plot_msi, xlab="", ylab="", type="l", lty=1,  ylim=c(max(c(0, min(plot_ci, na.rm=TRUE)-10)), max(plot_ci, na.rm=TRUE)+10), lwd=3, frame.plot=TRUE,
        cex.lab=1.5, cex.axis=1.5,
        panel.first = polygon(c(min(m_colnames):max(m_colnames), max(m_colnames):min(m_colnames)), c(plot_ci[2,], rev(plot_ci[1,])), col="grey90", border = NA))
   lines(m_colnames, plot_ci[2,], lty=2, lwd=2)
@@ -456,11 +456,11 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
   plot_msi <- msi_final
   plot_ci <- msi_ci_full
   
-  png(file=paste("saved_synth_", iter_num, "_msi_", method, "_with_true.png", sep=""),
+  png(file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_msi_", method, "_with_true.png", sep=""),
       width = 1280, height = 720, units = "px", pointsize = 12, bg = "white")
   
   par(mar=c(6,6,6,2) + 0.1)
-  plot(m_colnames, plot_msi, xlab="", ylab="", type="l", lty=1,  ylim=c(0,max(c(200, max(plot_ci, na.rm=TRUE)+10))), lwd=3, frame.plot=TRUE,
+  plot(m_colnames, plot_msi, xlab="", ylab="", type="l", lty=1,  ylim=c(max(c(0, min(plot_ci, na.rm=TRUE)-10)), max(plot_ci, na.rm=TRUE)+10), lwd=3, frame.plot=TRUE,
        cex.lab=1.5, cex.axis=1.5,
        panel.first = polygon(c(min(m_colnames):max(m_colnames), max(m_colnames):min(m_colnames)), c(plot_ci[2,], rev(plot_ci[1,])), col="grey90", border = NA))
   lines(m_colnames, plot_ci[2,], lty=2, lwd=2)
@@ -478,12 +478,12 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
     plot_msi <- msi_final_samp_list[[i]]
     plot_ci <- msi_ci_list[[i]]
     
-    dir.create(paste("Samp_Graphs_", method, "_", iter_num, sep=""))
-    png(file=paste("Samp_Graphs_", method, "_", iter_num, "/saved_synth_", iter_num, "_msi_samp_", samp_size, "_", i, "_", method, ".png", sep=""),
+    dir.create(paste("TestData/", iter_num, "/Samp_Graphs_", method, "_", iter_num, sep=""))
+    png(file=paste("TestData/", iter_num, "/Samp_Graphs_", method, "_", iter_num, "/saved_synth_", iter_num, "_msi_samp_", samp_size, "_", i, "_", method, ".png", sep=""),
         width = 1280, height = 720, units = "px", pointsize = 12, bg = "white")
     
     par(mar=c(6,6,6,2) + 0.1)
-    plot(m_colnames, plot_msi, xlab="", ylab="", type="l", lty=1,  ylim=c(0,max(c(200, max(plot_ci, na.rm=TRUE)+10))), lwd=3, frame.plot=TRUE,
+    plot(m_colnames, plot_msi, xlab="", ylab="", type="l", lty=1,  ylim=c(max(c(0, min(plot_ci, na.rm=TRUE)-10)), max(plot_ci, na.rm=TRUE)+10), lwd=3, frame.plot=TRUE,
          cex.lab=1.5, cex.axis=1.5,
          panel.first = polygon(c(min(m_colnames):max(m_colnames), max(m_colnames):min(m_colnames)), c(plot_ci[2,], rev(plot_ci[1,])), col="grey90", border = NA))
     lines(m_colnames, plot_ci[2,], lty=2, lwd=2)
@@ -495,11 +495,11 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
     dev.off()
     
     #plot sample trends with true trend
-    png(file=paste("Samp_Graphs_", method, "_", iter_num, "/saved_synth_", iter_num, "_msi_samp_vs_full_", samp_size, "_", i, "_", method, ".png", sep=""),
+    png(file=paste("TestData/", iter_num, "/Samp_Graphs_", method, "_", iter_num, "/saved_synth_", iter_num, "_msi_samp_vs_full_", samp_size, "_", i, "_", method, ".png", sep=""),
         width = 1280, height = 720, units = "px", pointsize = 12, bg = "white")
     
     par(mar=c(6,6,6,2) + 0.1)
-    plot(m_colnames, plot_msi, xlab="", ylab="", type="l", lty=1,  ylim=c(0,max(c(200, max(plot_ci, na.rm=TRUE)+10))), lwd=3, frame.plot=TRUE,
+    plot(m_colnames, plot_msi, xlab="", ylab="", type="l", lty=1,  ylim=c(max(c(0, min(plot_ci, na.rm=TRUE)-10)), max(plot_ci, na.rm=TRUE)+10), lwd=3, frame.plot=TRUE,
          cex.lab=1.5, cex.axis=1.5,
          panel.first = polygon(c(min(m_colnames):max(m_colnames), max(m_colnames):min(m_colnames)), c(plot_ci[2,], rev(plot_ci[1,])), col="grey90", border = NA))
     lines(m_colnames, plot_ci[2,], lty=2, lwd=2)
@@ -522,12 +522,12 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
       plot_ci <- grp_ci_list[[i]][j][[1]][,1:c]
       plot_real <- grp_real[[j]][,1:c]
       
-      dir.create(paste("Samp_Graphs_Group_", method, "_", iter_num, sep=""))
-      png(file=paste("Samp_Graphs_Group_", method, "_", iter_num, "/saved_synth_", iter_num, "_grp_samp_", samp_size, "_grp", j, "_", i, "_", method, ".png", sep=""),
+      dir.create(paste("TestData/", iter_num, "/Samp_Graphs_Group_", method, "_", iter_num, sep=""))
+      png(file=paste("TestData/", iter_num, "/Samp_Graphs_Group_", method, "_", iter_num, "/saved_synth_", iter_num, "_grp_samp_", samp_size, "_grp", j, "_", i, "_", method, ".png", sep=""),
           width = 1280, height = 720, units = "px", pointsize = 12, bg = "white")
       
       par(mar=c(6,6,6,2) + 0.1)
-      plot(m_colnames, plot_grp, xlab="", ylab="", type="l", lty=1, ylim=c(0,max(c(200, max(plot_ci, na.rm=TRUE)+10))), lwd=3, frame.plot=TRUE,
+      plot(m_colnames, plot_grp, xlab="", ylab="", type="l", lty=1, ylim=c(max(c(0, min(plot_ci, na.rm=TRUE)-10)), max(plot_ci, na.rm=TRUE)+10), lwd=3, frame.plot=TRUE,
            cex.lab=1.5, cex.axis=1.5,
            panel.first = polygon(c(min(m_colnames):max(m_colnames), max(m_colnames):min(m_colnames)), c(plot_ci[2,], rev(plot_ci[1,])), col="grey90", border = NA))
       lines(m_colnames, plot_ci[2,], lty=2, lwd=2)
@@ -539,11 +539,11 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c
       dev.off()
       
       #plot sampled group trends with true trend
-      png(file=paste("Samp_Graphs_Group_", method, "_", iter_num, "/saved_synth_", iter_num, "_grp_samp_vs_full_", samp_size, "_grp", j, "_", i, "_", method, ".png", sep=""),
+      png(file=paste("TestData/", iter_num, "/Samp_Graphs_Group_", method, "_", iter_num, "/saved_synth_", iter_num, "_grp_samp_vs_full_", samp_size, "_grp", j, "_", i, "_", method, ".png", sep=""),
           width = 1280, height = 720, units = "px", pointsize = 12, bg = "white")
       
       par(mar=c(6,6,6,2) + 0.1)
-      plot(m_colnames, plot_grp, xlab="", ylab="", type="l", lty=1, ylim=c(0,max(c(200, max(plot_ci, na.rm=TRUE)+10))), lwd=3, frame.plot=TRUE,
+      plot(m_colnames, plot_grp, xlab="", ylab="", type="l", lty=1, ylim=c(max(c(0, min(plot_ci, na.rm=TRUE)-10)), max(plot_ci, na.rm=TRUE)+10), lwd=3, frame.plot=TRUE,
            cex.lab=1.5, cex.axis=1.5,
            panel.first = polygon(c(min(m_colnames):max(m_colnames), max(m_colnames):min(m_colnames)), c(plot_ci[2,], rev(plot_ci[1,])), col="grey90", border = NA))
       lines(m_colnames, plot_ci[2,], lty=2, lwd=2)
