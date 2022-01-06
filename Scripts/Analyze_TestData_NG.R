@@ -1,14 +1,14 @@
 
 # save the test directory name to a variable
 dir_name <- "TestData/Testing2/"
-dir_name2 <- "TestData/Testing2/fixed/"
+dir_name2 <- "TestData/Testing2/fixed3/"
 
 dir_names <- list.dirs(path="TestData", 
                        full.names = TRUE, 
                        recursive = FALSE)
 
-# remove directory Testing2
-dir_names <- dir_names[1:300]
+# remove unwanted directories
+dir_names <- dir_names[701:1510]
 dir_names <- paste(dir_names, "/", sep="")
 
 # get lists of csv files in the test directory
@@ -212,7 +212,8 @@ for (i in 1:length(info_list)) {
   popspec_tl[i] <- round((tpops_tl[i] / tspec_tl[i]), digits = 1)
   sampsize_tl[i] <- length(sampdata[[1]])
   meanobs_tl[i] <- sum(!is.na(as.vector(tsdata[,1:tyears_tl[i]]))) / tpops_tl[i]
-  meanlength_tl[i] <- sum(!is.na(as.vector(tscdata[,1:tyears_tl[i]]))) / tpops_tl[i]
+ # meanlength_tl[i] <- sum(!is.na(as.vector(tscdata[,1:tyears_tl[i]]))) / tpops_tl[i]
+  meanlength_tl[i] <- info$mean_ts_length[1]
 
 }
 
@@ -260,3 +261,4 @@ for (i in 1:length(info_list)) {
   }
   
 }
+

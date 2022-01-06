@@ -21,8 +21,8 @@ library(TSdist)
 
 ## load external functions ----
 
-source("Scripts/Functions.R")
-source("Scripts/TestMethods.R")
+source("Scripts/Functions_NG.R")
+source("Scripts/TestMethods_NG.R")
 
 ## Main Function ----
 
@@ -53,41 +53,15 @@ all_fn <- function(popvar,
   # create synthetic populations, assigned to different species
   if (pgrowthx == 5) {
     
-    # create data frame to hold the populations
-    all_pops_index <- as.data.frame(matrix(data=NA, nrow=tpops, ncol=c+2))
-    
-    # loop for each group
-    for (i in 1:ngrps) {
-      
-      # create group of populations
-      temp <- pgrowth4.2(tpops/ngrps, tmax, popmean, popvar, popspec)
-      
-      # put them into the data frame
-      all_pops_index[(((tpops/ngrps)*i)-(tpops/ngrps)+1):((tpops/ngrps)*i),1:(c+1)] <- temp
-      
-      # add a group ID
-      all_pops_index[(((tpops/ngrps)*i)-(tpops/ngrps)+1):((tpops/ngrps)*i),(c+2)] <- i
-      
-    }
-    
-    # force back to data frame
-    all_pops_index <- as.data.frame(all_pops_index)
-    
-    # add column names
-    colnames(all_pops_index) <- c(1:c,"SpecID","GrpID")
-    
-    # get approx number of species per group
-    num_spec <- (tpops / (ngrps * popspec))
-    
-    # make species IDs unique
-    all_pops_index$SpecID <- all_pops_index$SpecID + (all_pops_index$GrpID*num_spec) - num_spec
-    
+    # create synthetic populations, assigned to different species
+    all_pops_index <- pgrowth4.2(tpops, tmax, popmean, popvar, popspec)
+
   } else("Check your synthetic data generator function input setting.")
   
   # save raw synthetic dataset
   saveRDS(all_pops_index, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_raw.RData", sep=""))
   
-  cat(paste("Constructing dataset:", "\nPopulations:", tpops, "\nSpecies:", length(unique(all_pops_index$SpecID)), "\nGroups:", ngrps, "\n\n"))
+  cat(paste("Constructing dataset:", "\nPopulations:", tpops, "\nSpecies:", length(unique(all_pops_index$SpecID)), "\n\n"))
   
   cat(paste0("Plotting geometric mean of the dataset.\n"))
   
@@ -175,28 +149,16 @@ all_fn <- function(popvar,
   full_spec_real <- species_index_fn(all_pops_index, c)
   saveRDS(full_spec_real, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_species_indices_TrueTrend.RData", sep=""))
   
-  cat(paste0("Creating ", ngrps, " group indices for true trend.\n"))
-  
-  # create group indices from the species indices
-  grp_real <- group_index_fn(full_spec_real, c, m_colnames)
-  saveRDS(grp_real, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_group_indices_TrueTrend.RData", sep=""))
-  
-  cat(paste0("Creating ", ngrps, " group confidence intervals for true trend.\n"))
-  
-  # create confidence intervals for the group indices
-  grp_ci_real <- ci_fn(full_spec_real, c, m_colnames, grouplevel=1)
-  saveRDS(grp_ci_real, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_grp_ci_TrueTrend.RData", sep=""))
-  
   cat(paste0("Creating msi for true trend.\n"))
   
   # create multi species indices from the group indices
-  msi_real <- group_index_fn(grp_real, c, m_colnames)
+  msi_real <- group_index_fn(full_spec_real, c, m_colnames)
   saveRDS(msi_real, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_msi_TrueTrend.RData", sep=""))
   
   cat(paste0("Creating msi confidence intervals for true trend.\n"))
   
-  # create confidence intervals for the multi species indices
-  msi_ci_real <- ci_fn(grp_real, c, m_colnames, grouplevel=1)
+  # create confidence intervals for the multi species index
+  msi_ci_real <- ci_fn(full_spec_real, c, m_colnames, grouplevel=1)
   saveRDS(msi_ci_real, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_msi_ci_TrueTrend.RData", sep=""))
   
   cat(paste0("Plotting true trend.\n"))
@@ -222,15 +184,15 @@ all_fn <- function(popvar,
   dev.off()
   
   
-  #temp <- method_fn(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c, m_colnames, n=NA, n_boot=NA, iter_num, samp_size, bootstrap_size, method="nores")
+  #temp <- method_fn(grp_data_culled, sample_pop_id_list, msi_real, c, m_colnames, n=NA, n_boot=NA, iter_num, samp_size, bootstrap_size, method="nores")
   
-  temp <- method_fn(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c, m_colnames, n=NA, n_boot=NA, iter_num, samp_size, bootstrap_size, method="lambda")
+  temp <- method_fn(grp_data_culled, sample_pop_id_list, msi_real, c, m_colnames, n=NA, n_boot=NA, iter_num, samp_size, bootstrap_size, method="lambda")
   
-  #temp <- method_fn(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c, m_colnames, n=n, n_boot=n_boot, iter_num, samp_size, bootstrap_size, method="lr")
+  #temp <- method_fn(grp_data_culled, sample_pop_id_list, msi_real, c, m_colnames, n=n, n_boot=n_boot, iter_num, samp_size, bootstrap_size, method="lr")
   
-  #temp <- method_fn(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c, m_colnames, n=n, n_boot=n_boot, iter_num, samp_size, bootstrap_size, method="my")
+  #temp <- method_fn(grp_data_culled, sample_pop_id_list, msi_real, c, m_colnames, n=n, n_boot=n_boot, iter_num, samp_size, bootstrap_size, method="my")
   
-  #temp <- method_fn(grp_data_culled, sample_pop_id_list, msi_real, grp_real, c, m_colnames, n=NA, n_boot=NA, iter_num, samp_size, bootstrap_size, method="lambda2")
+  #temp <- method_fn(grp_data_culled, sample_pop_id_list, msi_real, c, m_colnames, n=NA, n_boot=NA, iter_num, samp_size, bootstrap_size, method="lambda2")
   
   
   ## DATA GATHERING ##
@@ -251,6 +213,10 @@ all_fn <- function(popvar,
   info.dat$min_ts_length <- min_ts_length + 1
   info.dat$mean_gr_raw <- gr.stats.raw[1]
   info.dat$gr_sd_raw <- gr.stats.raw[2]
+  info.dat$samp_size <- samp_size
+  info.dat$pops_per_species <- popspec
+  info.dat$mean_ts_length <- mlength
+  info.dat$mean_num_obs <- numobs
   
   #info.dat$mean_gr_rebuilt <- gr.stats.rebuilt[1]
   #info.dat$gr_sd_rebuilt <- gr.stats.rebuilt[2]
@@ -283,27 +249,27 @@ c <- length(m_colnames) # number of years or columns (same as tmax)
 
 ## Setup Testing ----
 
-iter_num <- 5000
-gr_mean_a <- c(-0.02, -0.01, 0, 0.01, 0.02)
-gr_sd_vec_a <- 0.2
+iter_num <- 12000
+gr_mean_a <- rep(c(-0.03, 0, 0.03), each=270)
+gr_sd_vec_a <- rep(rep(c(0.1, 0.2, 0.3), each=90), 3)
 popspec <- 10
-mlength <- c(7, 10, 15, 20, 30)
-numobs <- 3
-samp_size <- 1000
+mlength <- rep(rep(rep(c(10, 20, 30), each=30), 3), 3)
+numobs <- 7
+samp_size <- rep(rep(rep(rep(c(100, 400, 700), each=10), 3), 3), 3)
 tmax <- 50
 c <- tmax
 tpops <- 10000
 m_colnames <- 1:c
-j_choice_a <- rep(gr_mean_a, each=20)
+j_choice_a <- rep(numobs, each=20)
 k_choice_a <- rep(mlength, 20)
 
 ## load external functions ----
 
-source("Scripts/Functions.R")
-source("Scripts/TestMethods.R")
+source("Scripts/Functions_NG.R")
+source("Scripts/TestMethods_NG.R")
 
 
-no_cores <- 5 # the number of cores to be used for parallel processing
+no_cores <- 8 # the number of cores to be used for parallel processing
 cl <- makeCluster(no_cores, outfile="TestData/output.txt") # create cluster for parallel processing
 registerDoSNOW(cl) # register the cluster
 clusterEvalQ(cl, c(library(tcltk),  # send necessary functions to the cluster
@@ -315,10 +281,11 @@ clusterEvalQ(cl, c(library(tcltk),  # send necessary functions to the cluster
                    library(matrixStats),
                    library(TSdist)))
 
+sink(file="console_output.txt", split=TRUE)
 # call the main function
-foreach(i = 1:100) %dopar% {  # loop for parallel processing
-  all_fn(popvar = gr_sd_vec_a, # variance in mean growth rate
-         popmean = j_choice_a[i], # mean growth rate
+foreach(i = 1:810) %dopar% {  # loop for parallel processing
+  all_fn(popvar = gr_sd_vec_a[i], # variance in mean growth rate
+         popmean = gr_mean_a[i], # mean growth rate
          pgrowthx = 5, # which time series generator to use
          iter_num = (iter_num+i), 
          tmax = tmax, # number of years
@@ -330,12 +297,12 @@ foreach(i = 1:100) %dopar% {  # loop for parallel processing
          count_thres = count_thres, # minimum number of population counts
          min_ts_length = min_ts_length, # minimum time series length
          c = c, # number of columns (years: same as tmax)
-         samp_size = samp_size, # number of time series in each sample
+         samp_size = samp_size[i], # number of time series in each sample
          m_colnames = m_colnames, # column names
-         mlength = k_choice_a[i], # mean length of time series 
+         mlength = mlength[i], # mean length of time series 
          numobs = numobs, # mean number of observations in each time series
          bootstrap_size = bootstrap_size, # number of samples
          error = FALSE) # add sampling error
 }
-
+sink()
 stopCluster(cl) # stop the cluster
