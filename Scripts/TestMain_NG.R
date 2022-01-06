@@ -133,6 +133,11 @@ all_fn <- function(popvar,
   
   cat(paste0("Creating ", bootstrap_size, " randomly sampled subsets of ", samp_size, " populations each.\n"))
   
+  # if sample size is too large, set it to 90% of the total number of populations
+  if (nrow(grp_data_culled) < samp_size) {
+    samp_size <- ceiling(0.9*nrow(grp_data_culled))
+  }
+  
   # create list of x population ID matrices at a given sample size, where x is the number of sample bootstraps
   sample_pop_id_list <- list()
   for (i in 1:bootstrap_size) {
@@ -249,19 +254,19 @@ c <- length(m_colnames) # number of years or columns (same as tmax)
 
 ## Setup Testing ----
 
-iter_num <- 12000
-gr_mean_a <- rep(c(-0.03, 0, 0.03), each=270)
-gr_sd_vec_a <- rep(rep(c(0.1, 0.2, 0.3), each=90), 3)
+iter_num <- 11700
+gr_mean_a <- 0
+gr_sd_vec_a <- 0.2
 popspec <- 10
-mlength <- rep(rep(rep(c(10, 20, 30), each=30), 3), 3)
+mlength <- 15
 numobs <- 7
-samp_size <- rep(rep(rep(rep(c(100, 400, 700), each=10), 3), 3), 3)
+samp_size <- rep(c(20, 40, 60, 80, 100, 125, 150, 175, 200, 250, 300, 350), 8)
 tmax <- 50
 c <- tmax
-tpops <- 10000
+tpops <- rep(rep(c(100, 200, 400), each=4), 8)
 m_colnames <- 1:c
-j_choice_a <- rep(numobs, each=20)
-k_choice_a <- rep(mlength, 20)
+#j_choice_a <- rep(numobs, each=20)
+#k_choice_a <- rep(mlength, 20)
 
 ## load external functions ----
 
@@ -283,13 +288,13 @@ clusterEvalQ(cl, c(library(tcltk),  # send necessary functions to the cluster
 
 sink(file="console_output.txt", split=TRUE)
 # call the main function
-foreach(i = 1:810) %dopar% {  # loop for parallel processing
-  all_fn(popvar = gr_sd_vec_a[i], # variance in mean growth rate
-         popmean = gr_mean_a[i], # mean growth rate
+foreach(i = 1:96) %dopar% {  # loop for parallel processing
+  all_fn(popvar = gr_sd_vec_a, # variance in mean growth rate
+         popmean = gr_mean_a, # mean growth rate
          pgrowthx = 5, # which time series generator to use
          iter_num = (iter_num+i), 
          tmax = tmax, # number of years
-         tpops = tpops, # total number of time series
+         tpops = tpops[i], # total number of time series
          popspec = popspec, # mean number of populations per species
          n = n, # number of GAM resamples 
          n_boot = n_boot, # number of index bootstraps for each species
@@ -299,7 +304,7 @@ foreach(i = 1:810) %dopar% {  # loop for parallel processing
          c = c, # number of columns (years: same as tmax)
          samp_size = samp_size[i], # number of time series in each sample
          m_colnames = m_colnames, # column names
-         mlength = mlength[i], # mean length of time series 
+         mlength = mlength, # mean length of time series 
          numobs = numobs, # mean number of observations in each time series
          bootstrap_size = bootstrap_size, # number of samples
          error = FALSE) # add sampling error
