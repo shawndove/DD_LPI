@@ -254,16 +254,16 @@ c <- length(m_colnames) # number of years or columns (same as tmax)
 
 ## Setup Testing ----
 
-iter_num <- 11700
-gr_mean_a <- 0
-gr_sd_vec_a <- 0.2
+iter_num <- 18000
+gr_mean_a <- rep(rep(c(rep(c(-0.1, -0.05, 0.05, 0.1), each=3), rep(c(-0.03, 0, 0.03), each=4)), 3), 3)
+gr_sd_vec_a <- rep(rep(c(rep(c(0.1, 0.2, 0.3), 4), rep(c(0.4, 0.5, 0.6, 0.7), 3)), 3), 3)
 popspec <- 10
-mlength <- 15
-numobs <- 7
-samp_size <- rep(c(20, 40, 60, 80, 100, 125, 150, 175, 200, 250, 300, 350), 8)
+mlength <- rep(rep(c(10, 20, 30), each=24), 3)
+numobs <- ceiling(0.5*mlength)
+samp_size <- rep(rep(100, 72), 3)
 tmax <- 50
 c <- tmax
-tpops <- rep(rep(c(100, 200, 400), each=4), 8)
+tpops <- 10000
 m_colnames <- 1:c
 #j_choice_a <- rep(numobs, each=20)
 #k_choice_a <- rep(mlength, 20)
@@ -288,13 +288,13 @@ clusterEvalQ(cl, c(library(tcltk),  # send necessary functions to the cluster
 
 sink(file="console_output.txt", split=TRUE)
 # call the main function
-foreach(i = 1:96) %dopar% {  # loop for parallel processing
-  all_fn(popvar = gr_sd_vec_a, # variance in mean growth rate
-         popmean = gr_mean_a, # mean growth rate
+foreach(i = 1:216) %dopar% {  # loop for parallel processing
+  all_fn(popvar = gr_sd_vec_a[i], # variance in mean growth rate
+         popmean = gr_mean_a[i], # mean growth rate
          pgrowthx = 5, # which time series generator to use
          iter_num = (iter_num+i), 
          tmax = tmax, # number of years
-         tpops = tpops[i], # total number of time series
+         tpops = tpops, # total number of time series
          popspec = popspec, # mean number of populations per species
          n = n, # number of GAM resamples 
          n_boot = n_boot, # number of index bootstraps for each species
@@ -304,8 +304,8 @@ foreach(i = 1:96) %dopar% {  # loop for parallel processing
          c = c, # number of columns (years: same as tmax)
          samp_size = samp_size[i], # number of time series in each sample
          m_colnames = m_colnames, # column names
-         mlength = mlength, # mean length of time series 
-         numobs = numobs, # mean number of observations in each time series
+         mlength = mlength[i], # mean length of time series 
+         numobs = numobs[i], # mean number of observations in each time series
          bootstrap_size = bootstrap_size, # number of samples
          error = FALSE) # add sampling error
 }
