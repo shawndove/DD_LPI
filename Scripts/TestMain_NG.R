@@ -254,13 +254,13 @@ c <- length(m_colnames) # number of years or columns (same as tmax)
 
 ## Setup Testing ----
 
-iter_num <- 18000
-gr_mean_a <- rep(rep(c(rep(c(-0.1, -0.05, 0.05, 0.1), each=3), rep(c(-0.03, 0, 0.03), each=4)), 3), 3)
-gr_sd_vec_a <- rep(rep(c(rep(c(0.1, 0.2, 0.3), 4), rep(c(0.4, 0.5, 0.6, 0.7), 3)), 3), 3)
+iter_num <- 20008
+gr_mean_a <- seq(-0.1, 0.1, 0.01) 
+gr_sd_vec_a <- seq(0.1, 0.7, 0.05)
 popspec <- 10
-mlength <- rep(rep(c(10, 20, 30), each=24), 3)
+mlength <- 15
 numobs <- ceiling(0.5*mlength)
-samp_size <- rep(rep(100, 72), 3)
+samp_size <- 1000
 tmax <- 50
 c <- tmax
 tpops <- 10000
@@ -288,9 +288,9 @@ clusterEvalQ(cl, c(library(tcltk),  # send necessary functions to the cluster
 
 sink(file="console_output.txt", split=TRUE)
 # call the main function
-foreach(i = 1:216) %dopar% {  # loop for parallel processing
-  all_fn(popvar = gr_sd_vec_a[i], # variance in mean growth rate
-         popmean = gr_mean_a[i], # mean growth rate
+foreach(i = 1:8) %dopar% {  # loop for parallel processing
+  all_fn(popvar = sample(gr_sd_vec_a, 10), # variance in mean growth rate
+         popmean = sample(gr_mean_a, 10), # mean growth rate
          pgrowthx = 5, # which time series generator to use
          iter_num = (iter_num+i), 
          tmax = tmax, # number of years
@@ -302,10 +302,10 @@ foreach(i = 1:216) %dopar% {  # loop for parallel processing
          count_thres = count_thres, # minimum number of population counts
          min_ts_length = min_ts_length, # minimum time series length
          c = c, # number of columns (years: same as tmax)
-         samp_size = samp_size[i], # number of time series in each sample
+         samp_size = samp_size, # number of time series in each sample
          m_colnames = m_colnames, # column names
-         mlength = mlength[i], # mean length of time series 
-         numobs = numobs[i], # mean number of observations in each time series
+         mlength = mlength, # mean length of time series 
+         numobs = numobs, # mean number of observations in each time series
          bootstrap_size = bootstrap_size, # number of samples
          error = FALSE) # add sampling error
 }

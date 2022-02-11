@@ -1032,7 +1032,7 @@ species_index_fn <- function(resamp_popmat, c, n=NA, n_boot=NA, lambda=FALSE, ra
     # add a group ID column
     sample_mat5$GrpID <- resamp_popmat$GrpID[1]
 
-    # add all resampled copies of the species index to the list of species indices
+    # add all copies of the species index to the list of species indices
     spec_index.list[[counter1]] <- sample_mat5
 
     # print information to show that a species has been completed
@@ -1045,7 +1045,7 @@ species_index_fn <- function(resamp_popmat, c, n=NA, n_boot=NA, lambda=FALSE, ra
   # loop to create species indices
   for (spec in spec_ids) {
     
-    # select all resampled populations that belong to a particular species
+    # select all populations that belong to a particular species
     spec_popdata <- subset(resamp_popmat, SpecID==spec)
     
     if (resample==FALSE) {
@@ -1111,7 +1111,7 @@ species_index_fn <- function(resamp_popmat, c, n=NA, n_boot=NA, lambda=FALSE, ra
           
         }
         
-        # convert time series values to natural log
+        # convert time series values to log10
         sample_mat1.7 <- log10(sample_mat1.5)
         
         if (lambda==TRUE) {
@@ -2676,6 +2676,74 @@ pgrowth4.2 <- function(tpops, tmax, gr_mean, gr_sd_vec, popspec) {
   
   return(all_pops)
 
+}
+
+# create a database of artificial populations
+# randomized change points ensure trends are not linear
+# this version runs the creation process separately for each species
+pgrowth4.3 <- function(tpops, tmax, gr_mean, gr_sd_vec, popspec) {
+  
+  all_pops <- matrix(NA, nrow = tpops, ncol = tmax+1) # create matrix to put all the population counts
+  
+  spec_id <- sample(1:(tpops/popspec), tpops, replace = TRUE) # assign each population to a species
+  
+  all_pops[,tmax+1] <- t(spec_id) # fill the final column of the matrix with the species IDs
+  
+  for (i in unique(spec_id)) { # loop over each species
+    
+    num_cp <- sample(1:(tmax/5), 1) # number of times to change the growth rate
+    
+    popmean <- sample(gr_mean, 1) # randomly select mean growth rate from inputs
+    
+    cp <- vector("logical", length = tmax) # create change points vector
+    
+    cp[c(sample(1:tmax, num_cp))] <- "TRUE" # assign change points to randomly chosen time points
+    
+    for (j in 1:tmax) { # loop for all time points
+      
+      if (cp[j] == "TRUE") { # check if each time point is a change point
+        
+        popmean <- sample(gr_mean, 1) # randomly select new mean growth rate from inputs
+        
+      } 
+      
+      #popmean1 <- sample(popmean, 1) # choose a mean growth rate for this species
+      
+      if (is.vector(all_pops[all_pops[,tmax+1]==i,])) { # check if there is only one pop. assigned to this species
+        
+        temp_pops <- 10^popmean # if so, assign it the mean growth rate, as no distribution is needed
+        
+      } else { # but if there is more than one population assigned to this species..
+        
+        temp_pops <- rlnorm(nrow(all_pops[all_pops[,tmax+1]==i,]), 
+                            meanlog = popmean, sdlog = gr_sd_vec) # create a growth rate distr. for this species
+        
+      }
+      
+      all_pops[all_pops[,tmax+1]==i,j] <- temp_pops # assign growth rates to each population in this species
+      
+    }  
+    
+  }
+  
+  for (i in 1:tpops) {
+    
+    ts <- cumprod(all_pops[i,1:tmax])
+    
+    ts <- (ts/ts[1])*100
+    
+    all_pops[i,1:tmax] <- ts
+    
+  }
+  
+  colnames(all_pops) <- c(1:(ncol(all_pops)-1), "SpecID")
+  
+  all_pops <- as.data.frame(all_pops)
+  
+  all_pops <- all_pops[complete.cases(all_pops),]
+  
+  return(all_pops)
+  
 }
 
 

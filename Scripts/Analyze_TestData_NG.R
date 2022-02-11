@@ -8,7 +8,8 @@ dir_names <- list.dirs(path="TestData",
                        recursive = FALSE)
 
 # remove unwanted directories
-dir_names <- dir_names[4283:4498]
+dir_names <- dir_names[4499:5048]
+dir_names <- dir_names[797:4498]
 #dir_names <- dir_names[1773:2668]
 dir_names <- paste(dir_names, "/", sep="")
 
@@ -264,7 +265,7 @@ for (i in 1:length(info_list)) {
 
 }
 
-# create data frame to hold results
+ ## create data frame to hold results
 test_results <- data.frame(matrix(NA, ncol = 14, nrow = length(info_list)*20))
 test_results_m <- data.frame(matrix(NA, ncol = 14, nrow = length(info_list)))
 
@@ -344,12 +345,17 @@ for (i in 1:length(info_list)) {
   
 }
 testm <- lm(log(TrendDev)~(MeanGR^2+MeanGR), data=test_results)
-summary(lm(log(TrendDev)~log(SampSize)+log(SDGR)+MeanGR+MeanTSLength, data=test_results))
-summary(lm(log(TrendDev)~log(SampSize)*log(SDGR)*MeanGR+MeanTSLength, data=test_results_m))
+rawmodel <- lm(log(TrendDev)~log(SampSize)+log(SDGR)+MeanGR+MeanTSLength, data=test_results)
+summary(rawmodel)
+hist(residuals(rawmodel), prob=TRUE, main="Histogram of residuals", xlab="Residuals", ylab="Density")
+lines(density(residuals(rawmodel)), col="red", lwd=2)
+
+
+summary(lm(log(TrendDev)~log(SampSize)*log(SDGR)*MeanGR+MeanTSLength, data=test_results_m2))
 summary(lm(log(TrendDev)~log(SampSize)+log(SDGR)+MeanGR+MeanTSLength+SampSize*SDGR+SampSize*MeanGR+SDGR*MeanGR+SampSize*SDGR*MeanGR+MeanTSLength, data=test_results))
 summary(nls(log(TrendDev)~(a*log(SampSize))+(b*log(SDGR))+(c*MeanGR)+(d*MeanTSLength)+(e*SampSize*SDGR)+(f*SampSize*MeanGR)+(g*SDGR*MeanGR)+k, data=test_results_m, start=list(a=0, b=0, c=0, d=0, e=0, f=0, g=0, k=0)))
 
-test_results_m2 <- test_results_m2[test_results_m2$SampSize > 20,]
+test_results_m2 <- test_results_m[test_results_m$SampSize > 20,]
 
 trmean <- test_results_m2 %>%
   group_by(SampSize) %>%
@@ -362,7 +368,7 @@ nn <- data.frame(SampSize = seq(50, 5000, 50))
 trmean_fit <- data.frame(TrendDev=exp(predict(trmean_lm, newdata=nn, SampSize=nn$SampSize)), SampSize=nn$SampSize)
 
 ggplot(test_results, aes(x=SampSize, y=TrendDev))+
-  geom_point(size=2)+
+  geom_boxplot(aes(group=SampSize))+
   geom_line(data=trmean_fit, aes(x=SampSize, y=TrendDev))+
   scale_y_reverse()
 
