@@ -44,7 +44,11 @@ all_fn <- function(popvar,
                    mlength, 
                    numobs, 
                    bootstrap_size, 
-                   error=FALSE) {
+                   error=FALSE,
+                   degrade="normal",
+                   mean_cv=0.15,
+                   min_cv=0.05,
+                   max_cv=0.25) {
   
   # create directory to store files
   if(!dir.exists("TestData/")) {dir.create("TestData/")}
@@ -55,7 +59,13 @@ all_fn <- function(popvar,
     
     # create synthetic populations, assigned to different species
     all_pops_index <- pgrowth4.2(tpops, tmax, popmean, popvar, popspec)
-
+    #all_pops_index <- readRDS(file=paste("TestData/", iter_num-40, "/saved_synth_", iter_num-40, "_raw.RData", sep=""))
+    
+  } else if (pgrowthx == 6) {
+    
+    # create synthetic populations, assigned to different species
+    all_pops_index <- pgrowth4.3(tpops, tmax, popmean, popvar, popspec)
+    
   } else("Check your synthetic data generator function input setting.")
   
   # save raw synthetic dataset
@@ -106,21 +116,107 @@ all_fn <- function(popvar,
     cat(paste("Adding random sampling error to dataset.\n"))
     
     # add sampling error to dataset
-    all_pops_error <- error_intr_fn(all_pops_index, m_colnames)
+    all_pops_error <- error_intr_fn2(all_pops_index, m_colnames, mean_cv=0.15, min_cv=0.05, max_cv=0.25)
     saveRDS(all_pops_error, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_error.RData", sep=""))
     
     cat(paste0("Degrading dataset.\n"))
     
-    # degrade dataset
-    all_pops_degraded <- degrade_ts_fn(all_pops_error, c, mlength, numobs)
+    if (degrade=="normal") {
+      
+      # degrade dataset
+      all_pops_degraded <- degrade_ts_fn(all_pops_error, c, mlength, numobs)
+
+    } else if (degrade=="endpoints") {
+      
+      # degrade dataset
+      all_pops_degraded <- degrade_ts_fn_endpoints(all_pops_error, c, mlength, numobs)
+      
+    } else if (degrade=="cluster") {
+      
+      # degrade dataset
+      all_pops_degraded <- degrade_ts_fn_clust(all_pops_error, c, mlength, numobs)
+      
+    } else if (degrade=="clustend") {
+      
+      if (samp_size >= ceiling(0.7*nrow(all_pops_error))) {
+        
+        stop("Sample size must be less than 70% of total populations to use clustend method.")
+        
+      }
+      
+      # select populations to make endpoints
+      endpops_ids <- sample(all_pops_index$PopID, ceiling(0.3*nrow(all_pops_index)))
+      endpops <- all_pops_index[all_pops_index$PopID %in% endpops_ids,]
+      
+      # remove endpops from pops index
+      all_pops_index2 <- all_pops_index[!(all_pops_index$PopID %in% endpops_ids),]
+      
+      # degrade dataset
+      all_pops_degraded <- degrade_ts_fn(all_pops_error2, c, mlength, numobs)
+      
+      # degraded endpops
+      endpops_degraded <- degrade_ts_fn_clustend2(endpops, c)
+      saveRDS(endpops_degraded, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_endpops_degraded.RData", sep=""))
+      
+      
+    } else if (degrade=="endreveal") {
+      
+      # degrade dataset
+      all_pops_degraded <- degrade_ts_fn_endreveal(all_pops_index, c, mlength, numobs)
+      
+    }
+    
     saveRDS(all_pops_degraded, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_degraded.RData", sep=""))
     
   } else {
     
     cat(paste0("Degrading dataset.\n"))
     
-    # degrade dataset
-    all_pops_degraded <- degrade_ts_fn(all_pops_index, c, mlength, numobs)
+    if (degrade=="normal") {
+      
+      # degrade dataset
+      all_pops_degraded <- degrade_ts_fn(all_pops_index, c, mlength, numobs)
+      
+    } else if (degrade=="endpoints") {
+      
+      # degrade dataset
+      all_pops_degraded <- degrade_ts_fn_endpoints(all_pops_index, c, mlength, numobs)
+      
+    } else if (degrade=="cluster") {
+      
+      # degrade dataset
+      all_pops_degraded <- degrade_ts_fn_clust(all_pops_index, c, mlength, numobs)
+      
+    } else if (degrade=="clustend") {
+      
+      if (samp_size >= ceiling(0.7*nrow(all_pops_index))) {
+        
+        stop("Sample size must be less than 70% of total populations to use clustend method.")
+        
+      }
+      
+      # select populations to make endpoints
+      endpops_ids <- sample(all_pops_index$PopID, ceiling(0.3*nrow(all_pops_index)))
+      endpops <- all_pops_index[all_pops_index$PopID %in% endpops_ids,]
+      
+      # degrade dataset
+      all_pops_degraded <- degrade_ts_fn(all_pops_index, c, mlength, numobs)
+      #all_pops_degraded <- readRDS(file=paste("TestData/", iter_num-40, "/saved_synth_", iter_num-40, "_degraded.RData", sep=""))
+      
+      # remove endpops from pops index
+      all_pops_degraded <- all_pops_degraded[!(all_pops_degraded$PopID %in% endpops_ids),]
+      
+      # degraded endpops
+      endpops_degraded <- degrade_ts_fn_clustend2(endpops, c)
+      saveRDS(endpops_degraded, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_endpops_degraded.RData", sep=""))
+      
+    } else if (degrade=="endreveal") {
+      
+      # degrade dataset
+      all_pops_degraded <- degrade_ts_fn_endreveal(all_pops_index, c, mlength, numobs)
+      
+    }
+    
     saveRDS(all_pops_degraded, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_degraded.RData", sep=""))
     
   }
@@ -133,9 +229,9 @@ all_fn <- function(popvar,
   
   cat(paste0("Creating ", bootstrap_size, " randomly sampled subsets of ", samp_size, " populations each.\n"))
   
-  # if sample size is too large, set it to 90% of the total number of populations
+  # if sample size is too large, set it to the total number of populations - 1
   if (nrow(grp_data_culled) < samp_size) {
-    samp_size <- ceiling(0.9*nrow(grp_data_culled))
+    samp_size <- (nrow(grp_data_culled)-1)
   }
   
   # create list of x population ID matrices at a given sample size, where x is the number of sample bootstraps
@@ -143,7 +239,18 @@ all_fn <- function(popvar,
   for (i in 1:bootstrap_size) {
     sample_pop_id_list[[i]] <- sample(grp_data_culled$PopID, samp_size)
   }
+  #sample_pop_id_list <- readRDS(file=paste("TestData/", iter_num-40, "/saved_synth_", iter_num-40, "_sample_pop_id_list.RData", sep=""))
   saveRDS(sample_pop_id_list, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_sample_pop_id_list.RData", sep=""))
+  
+  # if using clustend method, add selected endpops to all the samples and merge them back to the time series dataframe
+  if (degrade=="clustend") {
+    for (i in 1:bootstrap_size) {
+      sample_pop_id_list[[i]] <- c(sample_pop_id_list[[i]], endpops_ids)
+    }
+    saveRDS(sample_pop_id_list, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_sample_pop_id_list.RData", sep=""))
+   grp_data_culled <- rbind(grp_data_culled, endpops_degraded)
+   saveRDS(grp_data_culled, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_culled.RData", sep=""))
+  }
   
   
   ## TRUE TREND ##
@@ -222,6 +329,7 @@ all_fn <- function(popvar,
   info.dat$pops_per_species <- popspec
   info.dat$mean_ts_length <- mlength
   info.dat$mean_num_obs <- numobs
+  info.dat$degrade_type <- degrade
   
   #info.dat$mean_gr_rebuilt <- gr.stats.rebuilt[1]
   #info.dat$gr_sd_rebuilt <- gr.stats.rebuilt[2]
@@ -254,16 +362,16 @@ c <- length(m_colnames) # number of years or columns (same as tmax)
 
 ## Setup Testing ----
 
-iter_num <- 20008
-gr_mean_a <- seq(-0.1, 0.1, 0.01) 
-gr_sd_vec_a <- seq(0.1, 0.7, 0.05)
+iter_num <- 33520
+gr_mean_a <- 0.02
+gr_sd_vec_a <- 0.2
 popspec <- 10
-mlength <- 15
+mlength <- 30
 numobs <- ceiling(0.5*mlength)
-samp_size <- 1000
+samp_size <- 200
 tmax <- 50
 c <- tmax
-tpops <- 10000
+tpops <- 400
 m_colnames <- 1:c
 #j_choice_a <- rep(numobs, each=20)
 #k_choice_a <- rep(mlength, 20)
@@ -272,6 +380,7 @@ m_colnames <- 1:c
 
 source("Scripts/Functions_NG.R")
 source("Scripts/TestMethods_NG.R")
+source("Scripts/DegradeTSVersions_NG.R")
 
 
 no_cores <- 8 # the number of cores to be used for parallel processing
@@ -288,9 +397,9 @@ clusterEvalQ(cl, c(library(tcltk),  # send necessary functions to the cluster
 
 sink(file="console_output.txt", split=TRUE)
 # call the main function
-foreach(i = 1:8) %dopar% {  # loop for parallel processing
-  all_fn(popvar = sample(gr_sd_vec_a, 10), # variance in mean growth rate
-         popmean = sample(gr_mean_a, 10), # mean growth rate
+foreach(i = 1:20) %dopar% {  # loop for parallel processing
+  all_fn(popvar = gr_sd_vec_a, # variance in mean growth rate
+         popmean = gr_mean_a, # mean growth rate
          pgrowthx = 5, # which time series generator to use
          iter_num = (iter_num+i), 
          tmax = tmax, # number of years
@@ -307,7 +416,11 @@ foreach(i = 1:8) %dopar% {  # loop for parallel processing
          mlength = mlength, # mean length of time series 
          numobs = numobs, # mean number of observations in each time series
          bootstrap_size = bootstrap_size, # number of samples
-         error = FALSE) # add sampling error
+         error = TRUE,  # add observation error
+         degrade = "normal", # data degradation method
+         mean_cv=0.15, # mean coefficient of variation for observation error
+         min_cv=0.05, # min coefficient of variation for observation error
+         max_cv=0.25) # max coefficient of variation for observation error
 }
 sink()
 stopCluster(cl) # stop the cluster
