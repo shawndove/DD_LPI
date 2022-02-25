@@ -1,15 +1,18 @@
 
 # save the test directory name to a variable
 dir_name <- "TestData/Testing2/"
-dir_name2 <- "TestData/Testing2/fixed3/"
+dir_name2 <- "TestData/Testing2/fixed10/"
 
 dir_names <- list.dirs(path="TestData", 
                        full.names = TRUE, 
                        recursive = FALSE)
 
 # remove unwanted directories
-dir_names <- dir_names[4499:5048]
-dir_names <- dir_names[797:4498]
+dir_names <- dir_names[7956:7975]
+#dir_names <- dir_names[5696:7695]
+#dir_names <- dir_names[5616:5655]
+#dir_names <- dir_names[5676:5695]
+#dir_names <- dir_names[797:4498]
 #dir_names <- dir_names[1773:2668]
 dir_names <- paste(dir_names, "/", sep="")
 
@@ -34,7 +37,7 @@ ciw_list <- list.files(paste(dir_name,
 
 tsd_list <- list.files(paste(dir_name,
                              sep=""),
-                       pattern = "culled",
+                       pattern = "culled.",
                        full.names = TRUE,
                        recursive = FALSE)
 
@@ -104,7 +107,7 @@ for (i in 1:length(dir_names)) {
   
   tsd_list[i] <- list.files(paste(dir_names[i],
                                sep=""),
-                         pattern = "culled",
+                         pattern = "culled.",
                          full.names = TRUE,
                          recursive = FALSE)
   
@@ -218,6 +221,7 @@ tyears_tl <- vector()
 tpops_tl <- vector()
 boots_tl <- vector()
 sampsize_tl <- vector()
+samppercent_tl <- vector()
 popspec_tl <- vector()
 sdgr_tl <- vector()
 meangr_tl <- vector()
@@ -226,6 +230,7 @@ tsgenver_tl <- vector()
 tspec_tl <- vector()
 meanobs_tl <- vector()
 meanlength_tl <- vector()
+degrade_type_tl <- vector()
 
 # get data from files
 for (i in 1:length(info_list)) {
@@ -248,6 +253,7 @@ for (i in 1:length(info_list)) {
   tyears_tl[i] <- info$num_years[1]
   meangr_tl[i] <- info$mean_gr_raw[1]
   sdgr_tl[i] <- info$gr_sd_raw[1]
+  degrade_type_tl[i] <- info$degrade_type[1]
   trenddev_tl[[i]] <- trenddev$MSI
   trenddev_m_tl[[i]] <- trenddev_m[[2]]
   withinci_tl[[i]] <- withinci$MSI
@@ -259,6 +265,7 @@ for (i in 1:length(info_list)) {
   tspec_tl[i] <- length(unique(tsdata$SpecID))
   popspec_tl[i] <- round((tpops_tl[i] / tspec_tl[i]), digits = 1)
   sampsize_tl[i] <- length(sampdata[[1]])
+  samppercent_tl[i] <- (sampsize_tl[i] / tpops_tl[i]) * 100
   meanobs_tl[i] <- sum(!is.na(as.vector(tsdata[,1:tyears_tl[i]]))) / tpops_tl[i]
  # meanlength_tl[i] <- sum(!is.na(as.vector(tscdata[,1:tyears_tl[i]]))) / tpops_tl[i]
   meanlength_tl[i] <- info$mean_ts_length[1]
@@ -266,14 +273,15 @@ for (i in 1:length(info_list)) {
 }
 
  ## create data frame to hold results
-test_results <- data.frame(matrix(NA, ncol = 14, nrow = length(info_list)*20))
-test_results_m <- data.frame(matrix(NA, ncol = 14, nrow = length(info_list)))
+test_results <- data.frame(matrix(NA, ncol = 16, nrow = length(info_list)*20))
+test_results_m <- data.frame(matrix(NA, ncol = 16, nrow = length(info_list)))
 
 # name columns
 colnames(test_results) <- c("ID",
                             "MeanGR",
                             "SDGR",
                             "SampSize",
+                            "SampPercent",
                             "MeanTSLength",
                             "MeanNumObs",
                             "TotalPops",
@@ -282,6 +290,7 @@ colnames(test_results) <- c("ID",
                             "TotalYears",
                             "TSGenVersion",
                             "TrendDev",
+                            "DegradeType",
                             "WithinCI",
                             "CIWidth")
 
@@ -289,6 +298,7 @@ colnames(test_results_m) <- c("ID",
                             "MeanGR",
                             "SDGR",
                             "SampSize",
+                            "SampPercent",
                             "MeanTSLength",
                             "MeanNumObs",
                             "TotalPops",
@@ -297,6 +307,7 @@ colnames(test_results_m) <- c("ID",
                             "TotalYears",
                             "TSGenVersion",
                             "TrendDev",
+                            "DegradeType",
                             "WithinCI",
                             "CIWidth")
 
@@ -311,6 +322,7 @@ for (i in 1:length(info_list)) {
     test_results$MeanGR[counter] <- meangr_tl[i]
     test_results$SDGR[counter] <- sdgr_tl[i]
     test_results$SampSize[counter] <- sampsize_tl[i]
+    test_results$SampPercent[counter] <- samppercent_tl[i]
     test_results$MeanTSLength[counter] <- meanlength_tl[i]
     test_results$MeanNumObs[counter] <- meanobs_tl[i]
     test_results$TotalPops[counter] <- tpops_tl[i]
@@ -321,6 +333,7 @@ for (i in 1:length(info_list)) {
     test_results$TrendDev[counter] <- trenddev_tl[[i]][j]
     test_results$WithinCI[counter] <- withinci_tl[[i]][j]
     test_results$CIWidth[counter] <- ciwidth_tl[[i]][j]
+    test_results$DegradeType[counter] <- degrade_type_tl[i]
     
     counter <- counter + 1
     
@@ -330,6 +343,7 @@ for (i in 1:length(info_list)) {
   test_results_m$MeanGR[counter_m] <- meangr_tl[i]
   test_results_m$SDGR[counter_m] <- sdgr_tl[i]
   test_results_m$SampSize[counter_m] <- sampsize_tl[i]
+  test_results_m$SampPercent[counter_m] <- samppercent_tl[i]
   test_results_m$MeanTSLength[counter_m] <- meanlength_tl[i]
   test_results_m$MeanNumObs[counter_m] <- meanobs_tl[i]
   test_results_m$TotalPops[counter_m] <- tpops_tl[i]
@@ -340,6 +354,7 @@ for (i in 1:length(info_list)) {
   test_results_m$TrendDev[counter_m] <- trenddev_m_tl[[i]]
   test_results_m$WithinCI[counter_m] <- withinci_m_tl[[i]]
   test_results_m$CIWidth[counter_m] <- ciwidth_m_tl[[i]]
+  test_results_m$DegradeType[counter_m] <- degrade_type_tl[i]
   
   counter_m <- counter_m + 1
   
@@ -350,6 +365,8 @@ summary(rawmodel)
 hist(residuals(rawmodel), prob=TRUE, main="Histogram of residuals", xlab="Residuals", ylab="Density")
 lines(density(residuals(rawmodel)), col="red", lwd=2)
 
+rawmodel2 <- lm(log(TrendDev)~log(SampSize)+log(SDGR)+MeanGR+MeanTSLength+log(TotalPops)+SampPercent, data=test_results_m)
+summary(rawmodel2)
 
 summary(lm(log(TrendDev)~log(SampSize)*log(SDGR)*MeanGR+MeanTSLength, data=test_results_m2))
 summary(lm(log(TrendDev)~log(SampSize)+log(SDGR)+MeanGR+MeanTSLength+SampSize*SDGR+SampSize*MeanGR+SDGR*MeanGR+SampSize*SDGR*MeanGR+MeanTSLength, data=test_results))
