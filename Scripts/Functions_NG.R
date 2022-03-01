@@ -2869,6 +2869,9 @@ error_intr_fn <- function(all_pops_index, m_colnames) {
 # function to introduce observation error to time series
 error_intr_fn2 <- function(all_pops_index, m_colnames, mean_cv, min_cv, max_cv) {
   
+  # remove zeros and convert to log
+  all_pops_index <- log(all_pops_index + 0.0000001)
+  
   # create matrix to hold new index values
   all_pops_error <- matrix(data = NA, nrow = nrow(all_pops_index), ncol= length(m_colnames))
   
@@ -2909,6 +2912,9 @@ error_intr_fn2 <- function(all_pops_index, m_colnames, mean_cv, min_cv, max_cv) 
     }
     
   }
+  
+  # back convert from log
+  all_pops_error <- exp(all_pops_error)
   
   # adjust all indices to begin at a base value of 100
   all_pops_error <- all_pops_error / all_pops_error[,1] * 100
