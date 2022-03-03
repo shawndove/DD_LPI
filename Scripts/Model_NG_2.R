@@ -17,7 +17,7 @@ M_meangr <- vector()
 M_sdgr <- vector()
 M_tslength <- vector()
 counter <- 1
-for (i in 19001:19550) {
+for (i in 21001:21549) {
   
   M_info <- read.csv(file=paste("TestData/", i, "/saved_synth_", i, "_info.csv", sep=""))
   
@@ -144,10 +144,11 @@ ggplot(td95_tempdf, aes(x=ss, y=td95))+
   geom_boxplot(aes(group=ss), size=0.3, outlier.size=0.7)+
   geom_line(data=td95_fit, aes(x=ss, y=td95), size=0.5, color="blue")+
   scale_y_reverse()+
-  geom_vline(xintercept = 1500, size=0.5, color="red")+
+  geom_vline(xintercept = 520, size=0.5, color="red")+
+  #geom_hline(yintercept = 0.058, size=0.5, color="black")+
   #geom_point(aes(x=1500, y=0.045), size=2, shape=1, stroke=1, color="black")+
   #annotate("segment", x = 0, xend = 3000, y = 0.045, yend = 0.002, color="black", size = 0.5)+
-  annotate("point", x = 520, y = 0.058, color="red", size=4)+
+  #annotate("point", x = 520, y = 0.058, color="red", size=4)+
   ggtitle("TDV (trend deviation value) curve")+
   ylab("TDV")+
   xlab("Sample Size")+

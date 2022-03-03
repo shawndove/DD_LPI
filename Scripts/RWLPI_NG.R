@@ -147,7 +147,7 @@ LPI_full <- read.csv(file="Data/LPR2020data_public.csv", sep=",", stringsAsFacto
 #LPI_test <- read_excel("Data/LPR2020data_public.csv")
 
 # all data, including private
-LPI_full2 <- read.csv(file="Data/LPD_output_20201116.csv", sep=",", stringsAsFactors=FALSE)
+LPI_full <- read.csv(file="Data/LPD_output_20201116.csv", sep=",", stringsAsFactors=FALSE)
 # fix ID column name
 colnames(LPI_full)[1] <- "ID"
 # remove everything added after May 2016
@@ -161,7 +161,7 @@ colnames(LPI_full) <- gsub("X", "", colnames(LPI_full))
 
 firstyear <- 1950 # first year of data
 startyear <- 1970 # first year of data to use for index
-endyear <- 2015 # final year of data
+endyear <- 2019 # final year of data
 m_colnames <- as.character(startyear:endyear) # index years/column names
 m_colnames2 <- as.character(firstyear:endyear) # index years/column names
 c <- length(m_colnames) # number of years/columns
@@ -389,13 +389,40 @@ for (i in 1:length(model_tax_list)) {
   
 }
 
-# calculate mean growth rate for each LPI group
+# calculate mean growth rate for each model LPI group
 gr.stats.list <- list()
 # loop over taxonomic groups
 for (i in 1:length(model_pop_list)) {
   
   # select all copies of the populations listed in the sample
   group_data <- LPI_trimmed[LPI_trimmed$PopID %in% model_pop_list[[i]],]
+  
+  # remove all populations with less than 2 data points
+  group_data_culled <- cull_fn(group_data, 2, 2, c2)
+  
+  # log-linear interpolate all pops
+  grp_completed <- complete_time_series(group_data_culled, c2, m_colnames2, calcsd=TRUE)
+  
+  if (nrow(grp_completed) >=1) {
+    
+    # get mean and standard deviation of the mean growth rate
+    gr.stats.list[[i]] <- growth_rate_calc_fn(grp_completed[,1:c2], model=TRUE)
+    
+  } else {
+    
+    gr.stats.list[[i]] <- NA
+    
+  }
+  
+}
+
+# calculate mean growth rate for each actual LPI group
+gr.stats.list <- list()
+# loop over taxonomic groups
+for (i in 1:length(pop_list)) {
+  
+  # select all copies of the populations listed in the sample
+  group_data <- LPI_trimmed[LPI_trimmed$PopID %in% pop_list[[i]],]
   
   # remove all populations with less than 2 data points
   group_data_culled <- cull_fn(group_data, 2, 2, c2)

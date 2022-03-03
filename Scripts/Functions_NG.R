@@ -2689,21 +2689,21 @@ pgrowth4.3 <- function(tpops, tmax, gr_mean, gr_sd_vec, popspec) {
   
   all_pops[,tmax+1] <- t(spec_id) # fill the final column of the matrix with the species IDs
   
+  num_cp <- sample(1:(tmax/10), 1) # number of times to change the growth rate
+  
+  cp <- vector("logical", length = tmax) # create change points vector
+  
+  cp[c(sample(1:tmax, num_cp))] <- "TRUE" # assign change points to randomly chosen time points
+  
   for (i in unique(spec_id)) { # loop over each species
     
-    num_cp <- sample(1:(tmax/5), 1) # number of times to change the growth rate
-    
-    popmean <- sample(gr_mean, 1) # randomly select mean growth rate from inputs
-    
-    cp <- vector("logical", length = tmax) # create change points vector
-    
-    cp[c(sample(1:tmax, num_cp))] <- "TRUE" # assign change points to randomly chosen time points
+    popmean <- sample(rnorm(1000, mean=gr_mean, sd=gr_sd_vec), 1) # randomly select mean growth rate from inputs
     
     for (j in 1:tmax) { # loop for all time points
       
       if (cp[j] == "TRUE") { # check if each time point is a change point
         
-        popmean <- sample(gr_mean, 1) # randomly select new mean growth rate from inputs
+        popmean <- sample(rnorm(1000, mean=gr_mean, sd=gr_sd_vec), 1) # randomly select new mean growth rate from inputs
         
       } 
       
@@ -2717,6 +2717,9 @@ pgrowth4.3 <- function(tpops, tmax, gr_mean, gr_sd_vec, popspec) {
         
         temp_pops <- rlnorm(nrow(all_pops[all_pops[,tmax+1]==i,]), 
                             meanlog = popmean, sdlog = gr_sd_vec) # create a growth rate distr. for this species
+        
+        #temp_pops <- rnorm(nrow(all_pops[all_pops[,tmax+1]==i,]), 
+        #                                       mean = exp(popmean), sd = gr_sd_vec)
         
       }
       
@@ -2867,28 +2870,31 @@ error_intr_fn <- function(all_pops_index, m_colnames) {
 }
 
 # function to introduce observation error to time series
-error_intr_fn2 <- function(all_pops_index, m_colnames, mean_cv, min_cv, max_cv) {
+error_intr_fn2 <- function(all_pops_index, m_colnames, mean_cv, cv_sd) {
   
   # remove zeros and convert to log
-  all_pops_index <- log(all_pops_index + 0.0000001)
+  all_pops_index2 <- log(all_pops_index[,1:length(m_colnames)] + 0.0000001)
   
   # create matrix to hold new index values
   all_pops_error <- matrix(data = NA, nrow = nrow(all_pops_index), ncol= length(m_colnames))
   
   # find the difference between the mean and minimum
-  mean_min_diff <- mean_cv - min_cv
+  #mean_min_diff <- mean_cv - min_cv
   
   # find the difference between the maximum and the mean
-  mean_max_diff <- max_cv - mean_cv
+  #mean_max_diff <- max_cv - mean_cv
   
   # the standard deviation for the cv distribution is calculated as one third of
   # the difference between the max and mean or mean and min, whichever is smaller
   # because a normal distribution of 1000 values should give max and min values 
   # of roughly 3x the standard deviation (this is subject to chance)
-  cv_sd <- min(c(mean_min_diff, mean_max_diff)) / 3
+  #cv_sd <- min(c(mean_min_diff, mean_max_diff)) / 3
   
   # generate distribution of cv values
   cv_dist <- rnorm(1000, mean = mean_cv, sd = cv_sd)
+  
+  # remove negative values
+  cv_dist <- cv_dist[cv_dist >= 0]
   
   # sample cv value for each row of the dataset, with replacement
   row_cv <- sample(cv_dist, size = nrow(all_pops_index), replace = TRUE)
@@ -2901,11 +2907,13 @@ error_intr_fn2 <- function(all_pops_index, m_colnames, mean_cv, min_cv, max_cv) 
       
       # create a normal distribution of index values with actual index value as mean and std_val as st. dev.
       # note that this uses the absolute value of the normal distribution to avoid negative values
-      distribution <- rnorm(1000, mean = all_pops_index[i,j], sd = all_pops_index[i,j] * row_cv[i])
+      distribution <- rnorm(1000, mean = all_pops_index2[i,j], sd = all_pops_index2[i,j] * row_cv[i])
       
-      distribution_nz <- distribution[distribution > 0] # remove zeros
+     # distribution_nz <- distribution[distribution > 0] # remove zeros
       
-      new_ival <- sample(distribution_nz, 1) # sample from distribution to get new index value with error
+    #  new_ival <- sample(distribution_nz, 1) # sample from distribution to get new index value with error
+      
+      new_ival <- sample(distribution, 1) # sample from distribution to get new index value with error
       
       all_pops_error[i,j] <- new_ival # put new index value into matrix
       
@@ -2939,6 +2947,8 @@ growth_rate_calc_fn <- function(merged.matrix, model=FALSE) {
   maxr <- vector()
   meanr <- vector()
   minr <- vector()
+  sd.mr <- vector()
+  gratelist <- list()
   
   # loop to get max and mean growth rates
   for (i in 1:nrow(merged.matrix)) {
@@ -2977,18 +2987,30 @@ growth_rate_calc_fn <- function(merged.matrix, model=FALSE) {
     maxr[i] <- max(g.rate.vec)
     
     # find the mean growth rate from the given row (geometric mean).
-    #meanr[i] <- exp(1) ^ mean(log(g.rate.vec))
-    meanr[i] <- mean(g.rate.vec)
+    meanr[i] <- exp(1) ^ mean(log(g.rate.vec))
+    #meanr[i] <- mean(g.rate.vec)
     
     # find the mimimum growth rate from the given row.
     minr[i] <- min(g.rate.vec)
+    
+    sd.mr[i] <- sd(g.rate.vec)
+    
+    gratelist[[i]] <- g.rate.vec
   }
+  
+  allgrates <- unlist(gratelist)
+  
+  sd.all <- sd(allgrates)
+  
+  sd.mr <- sd.mr[!is.na(sd.mr) & is.finite(sd.mr)]
   
   maxr <- maxr[!is.na(maxr) & is.finite(maxr)]
   
   meanr <- meanr[!is.na(meanr) & is.finite(meanr)]
   
   minr <- minr[!is.na(minr) & is.finite(minr)]
+  
+  mean.sdmr <- mean(sd.mr, na.rm=TRUE)
   
   maxr.mean <- mean(maxr, na.rm=TRUE)
   
@@ -3026,9 +3048,9 @@ growth_rate_calc_fn <- function(merged.matrix, model=FALSE) {
   
   meanr.geomean <- exp(1) ^ mean(log(meanr))
   
-  return.vals <- c(meanr.mean, meanr.sd, meanr.max, meanr.min, meanr.var, maxr.max, minr.min, meanr)
+  return.vals <- c(meanr.geomean, sd.all, meanr.sd, meanr.max, meanr.min, meanr.var, maxr.max, minr.min, meanr.mean)
   
-  names(return.vals) <- c("mean.mean.gr", "sd.mean.gr", "max.mean.gr", "min.mean.gr", "var.mean.gr", "max.max.gr", "min.min.gr", "mean.gr")
+  names(return.vals) <- c("mean.geomean.gr", "sd.all.gr", "sd.mean.gr", "max.mean.gr", "min.mean.gr", "var.mean.gr", "max.max.gr", "min.min.gr", "mean.mean.gr")
   
   return(return.vals)
   
@@ -3042,6 +3064,9 @@ growth_rate_calc_fn2 <- function(merged.matrix, c2=50, model=FALSE) {
   maxr2 <- vector()
   meanr2 <- vector()
   minr2 <- vector()
+  sd.mr2 <- vector()
+  gratelist2 <- list()
+  popgrlist2 <- list()
   
   # loop to get max and mean growth rates
   for (i in unique(merged.matrix$SpecID)) {
@@ -3050,7 +3075,9 @@ growth_rate_calc_fn2 <- function(merged.matrix, c2=50, model=FALSE) {
     maxr <- vector()
     meanr <- vector()
     minr <- vector()
-    
+    sd.mr <- vector()
+    gratelist <- list()
+
     tempa <- merged.matrix[merged.matrix$SpecID==i,1:c2] # get non-na values
     
     for (j in 1:nrow(tempa)) {
@@ -3091,11 +3118,15 @@ growth_rate_calc_fn2 <- function(merged.matrix, c2=50, model=FALSE) {
       maxr[j] <- max(g.rate.vec)
       
       # find the mean growth rate from the given row (geometric mean).
-      #meanr[j] <- exp(1) ^ mean(log(g.rate.vec))
-      meanr[j] <- mean(g.rate.vec)
+      meanr[j] <- exp(1) ^ mean(log(g.rate.vec))
+      #meanr[j] <- mean(g.rate.vec)
       
       # find the mimimum growth rate from the given row.
       minr[j] <- min(g.rate.vec)
+      
+      sd.mr[j] <- sd(g.rate.vec)
+      
+      gratelist[[j]] <- g.rate.vec
       
     }
     
@@ -3104,14 +3135,34 @@ growth_rate_calc_fn2 <- function(merged.matrix, c2=50, model=FALSE) {
     meanr2[i] <- mean(meanr)
     
     minr2[i] <- min(minr)
+    
+    sd.mr2[i] <- sd(meanr)
+    
+    gratelist.temp <- unlist(gratelist)
+    
+    gratelist2[[i]] <- gratelist.temp
+    
+    popgrlist2[[i]] <- meanr
    
   }
   
+  allgrates <- unlist(gratelist2)
+  
+  sd.all <- sd(allgrates)
+  
+  popgrates <- unlist(popgrlist2)
+  
+  sd.pop <- sd(popgrates)
+
   maxr2 <- maxr2[!is.na(maxr2) & is.finite(maxr2)]
   
   meanr2 <- meanr2[!is.na(meanr2) & is.finite(meanr2)]
   
   minr2 <- minr2[!is.na(minr2) & is.finite(minr2)]
+  
+  sd.mr2 <- sd.mr2[!is.na(sd.mr2) & is.finite(sd.mr2)]
+  
+  mean.sdmr2 <- mean(sd.mr2, na.rm=TRUE)
   
   maxr.mean <- mean(maxr2, na.rm=TRUE)
   
@@ -3149,9 +3200,9 @@ growth_rate_calc_fn2 <- function(merged.matrix, c2=50, model=FALSE) {
   
   meanr.geomean <- exp(1) ^ mean(log(meanr2))
   
-  return.vals <- c(meanr.mean, meanr.sd, meanr.max, meanr.min, meanr.var, maxr.max, minr.min, meanr2)
+  return.vals <- c(meanr.geomean, sd.all, sd.pop, meanr.sd, meanr.max, meanr.min, meanr.var, maxr.max, minr.min, meanr.mean)
   
-  names(return.vals) <- c("mean.mean.gr", "sd.mean.gr", "max.mean.gr", "min.mean.gr", "var.mean.gr", "max.max.gr", "min.min.gr", "mean.gr")
+  names(return.vals) <- c("mean.geomean.gr", "sd.all.gr", "sd.pop.gr", "sd.mean.gr", "max.mean.gr", "min.mean.gr", "var.mean.gr", "max.max.gr", "min.min.gr", "mean.mean.gr")
   
   return(return.vals)
   
