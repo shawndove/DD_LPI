@@ -2873,7 +2873,7 @@ error_intr_fn <- function(all_pops_index, m_colnames) {
 error_intr_fn2 <- function(all_pops_index, m_colnames, mean_cv, cv_sd) {
   
   # remove zeros and convert to log
-  all_pops_index2 <- log(all_pops_index[,1:length(m_colnames)] + 0.0000001)
+  #all_pops_index2 <- log(all_pops_index[,1:length(m_colnames)] + 0.0000001)
   
   # create matrix to hold new index values
   all_pops_error <- matrix(data = NA, nrow = nrow(all_pops_index), ncol= length(m_colnames))
@@ -2907,13 +2907,13 @@ error_intr_fn2 <- function(all_pops_index, m_colnames, mean_cv, cv_sd) {
       
       # create a normal distribution of index values with actual index value as mean and std_val as st. dev.
       # note that this uses the absolute value of the normal distribution to avoid negative values
-      distribution <- rnorm(1000, mean = all_pops_index2[i,j], sd = all_pops_index2[i,j] * row_cv[i])
+      distribution <- rnorm(1000, mean = all_pops_index[i,j], sd = all_pops_index[i,j] * row_cv[i])
       
-     # distribution_nz <- distribution[distribution > 0] # remove zeros
+      distribution_nz <- distribution[distribution > 0] # remove zeros
       
-    #  new_ival <- sample(distribution_nz, 1) # sample from distribution to get new index value with error
+      new_ival <- sample(distribution_nz, 1) # sample from distribution to get new index value with error
       
-      new_ival <- sample(distribution, 1) # sample from distribution to get new index value with error
+     # new_ival <- sample(distribution, 1) # sample from distribution to get new index value with error
       
       all_pops_error[i,j] <- new_ival # put new index value into matrix
       
@@ -2922,7 +2922,7 @@ error_intr_fn2 <- function(all_pops_index, m_colnames, mean_cv, cv_sd) {
   }
   
   # back convert from log
-  all_pops_error <- exp(all_pops_error)
+  #all_pops_error <- exp(all_pops_error)
   
   # adjust all indices to begin at a base value of 100
   all_pops_error <- all_pops_error / all_pops_error[,1] * 100
@@ -3208,6 +3208,217 @@ growth_rate_calc_fn2 <- function(merged.matrix, c2=50, model=FALSE) {
   
 }
 
+# calculate species mean growth rates
+growth_rate_calc_fn3 <- function(merged.matrix, c2=50, model=FALSE) {
+  
+  # create empty vectors to store max, min, and mean growth rates
+  maxr2 <- vector()
+  geomeanr2 <- vector()
+  armeanr2 <- vector()
+  minr2 <- vector()
+  sd.mr2 <- vector()
+  specgr <- vector()
+  specsd <- vector()
+  gratelist2 <- list()
+  popgeogrlist2 <- list()
+  popargrlist2 <- list()
+  popsdlist2 <- list()
+  
+  counter <- 1
+
+  # loop to get max and mean growth rates
+  for (i in unique(merged.matrix$SpecID)) {
+    
+    # create empty vectors to store max, min, and mean growth rates
+    maxr <- vector()
+    geomeanr <- vector()
+    armeanr <- vector()
+    minr <- vector()
+    sd.mr <- vector()
+    gratelist <- list()
+
+    tempa <- merged.matrix[merged.matrix$SpecID==i,1:c2] # get non-na values
+    
+    for (j in 1:nrow(tempa)) {
+      
+      temp <- tempa[j,]
+      
+      if (model==TRUE) {
+        
+        temp <- temp[!is.na(temp)] # exclude NAs
+        
+        temp <- temp[temp > 0] # exclude values of 0 or less
+        
+      }
+      
+      if (length(temp) < 2) {
+        
+        temp <- c(1,1,1)
+        
+      }
+      
+      # create a vector of initial values for growth rate calculation. correct for ID column at end of data.
+      start.vals <- temp[1:(length(temp) - 1)]
+      
+      # create a vector of final values for growth rate calculation. correct for ID column at end of data.
+      final.vals <- temp[2:(length(temp))]
+      
+      # calculate the growth rates
+      g.rate <- log(final.vals / start.vals)
+      
+      g.rate[g.rate >= 2.302585] <- 2.302585
+      
+      g.rate[g.rate <= -2.302585] <- -2.302585
+      
+      # convert to a vector
+      g.rate.vec <- as.vector(as.matrix(g.rate))
+      
+      # find the maximum growth rate from the given row.
+      maxr[j] <- max(g.rate.vec)
+      
+      # find the mean growth rate from the given row (geometric mean).
+      geomeanr[j] <- exp(1) ^ mean(log(g.rate.vec))
+      armeanr[j] <- mean(g.rate.vec)
+      
+      # find the mimimum growth rate from the given row.
+      minr[j] <- min(g.rate.vec)
+      
+      # find the standard deviation of growth rates for a given row
+      sd.mr[j] <- sd(g.rate.vec)
+      
+      gratelist[[j]] <- g.rate.vec
+      
+    }
+    
+    maxr2[counter] <- max(maxr)
+    
+    # arithmetic mean of population mean growth rates for the species
+    geomeanr2[counter] <- mean(geomeanr, na.rm=TRUE)
+    armeanr2[counter] <- mean(armeanr, na.rm=TRUE)
+    
+    minr2[counter] <- min(minr)
+    
+    # standard deviation of population mean growth rates for the species
+    sd.mr2[counter] <- sd(geomeanr, na.rm=TRUE)
+    
+    gratelist.temp <- unlist(gratelist)
+    
+    specgr[counter] <- mean(gratelist.temp)
+    
+    specsd[counter] <- sd(gratelist.temp)
+    
+    gratelist2[[counter]] <- gratelist.temp
+    
+    # list of population mean growth rates by species
+    popgeogrlist2[[counter]] <- geomeanr[!is.na(geomeanr) & is.finite(geomeanr)]
+    popargrlist2[[counter]] <- armeanr[!is.na(armeanr) & is.finite(armeanr)]
+    
+    # list of population growth rate standard deviations by species
+    popsdlist2[[counter]] <- sd.mr[!is.na(sd.mr) & is.finite(sd.mr)]
+    
+    counter <- counter + 1
+    
+  }
+  
+  allgrates <- unlist(gratelist2)
+  
+  sd.all <- sd(allgrates)
+  
+  popargrates <- unlist(popargrlist2)
+  popargrates <- popargrates[!is.na(popargrates) & is.finite(popargrates)]
+  
+  popgeogrates <- unlist(popgeogrlist2)
+  popgeogrates <- popgeogrates[!is.na(popgeogrates) & is.finite(popgeogrates)]
+  
+  # arithmetic mean of population mean growth rates
+  armeanpopargrates <- mean(popargrates)
+  armeanpopgeogrates <- mean(popgeogrates)
+  
+  # geometric mean of population mean growth rates
+  geomeanpopargrates <- exp(1) ^ mean(log(popargrates))
+  geomeanpopgeogrates <- exp(1) ^ mean(log(popgeogrates))
+  
+  # population standard deviations of growth rates
+  popsds <- unlist(popsdlist2)
+  
+  # arithmetic mean of population standard deviations of growth rates
+  meanpopsds <- mean(popsds, na.rm=TRUE)
+  # standard deviation of population standard deviations of growth rates
+  sdpopsds <- sd(popsds, na.rm=TRUE)
+  
+  # standard deviation of population mean growth rates
+  sd.geopop <- sd(popgeogrates)
+  sd.arpop <- sd(popargrates)
+  
+  maxr2 <- maxr2[!is.na(maxr2) & is.finite(maxr2)]
+  
+  # arithmetic means of population geometric mean growth rates for each species
+  geomeanr2 <- geomeanr2[!is.na(geomeanr2) & is.finite(geomeanr2)]
+  
+  minr2 <- minr2[!is.na(minr2) & is.finite(minr2)]
+  
+  # standard deviations of population geometric mean growth rates for each species
+  #sd.mr2 <- sd.mr2[!is.na(sd.mr2) & is.finite(sd.mr2)]
+  
+  mean.sdmr2 <- mean(sd.mr2, na.rm=TRUE)
+  
+  maxr.mean <- mean(maxr2, na.rm=TRUE)
+  
+  maxr.sd <- sd(maxr2, na.rm=TRUE)
+  
+  maxr.var <- maxr.sd / sqrt(length(maxr2))
+  
+  maxr.max <- max(maxr2)
+  
+  maxr.min <- min(maxr2)
+  
+  maxr.geomean <- exp(1) ^ mean(log(maxr2))
+  
+  minr.mean <- mean(minr2, na.rm=TRUE)
+  
+  minr.sd <- sd(minr2, na.rm=TRUE)
+  
+  minr.var <- minr.sd / sqrt(length(minr2))
+  
+  minr.max <- max(minr2)
+  
+  minr.min <- min(minr2)
+  
+  minr.geomean <- exp(1) ^ mean(log(minr2))
+  
+  meanr.mean <- mean(geomeanr2)
+  
+  meanr.sd <- sd(geomeanr2)
+  
+  meanr.var <- meanr.sd / sqrt(length(geomeanr2))
+  
+  meanr.max <- max(geomeanr2)
+  
+  meanr.min <- min(geomeanr2)
+  
+  meanr.geomean <- exp(1) ^ mean(log(geomeanr2))
+  
+#  return.vals <- c(meanr.geomean, sd.all, sd.pop, meanr.sd, meanr.max, meanr.min, meanr.var, maxr.max, minr.min, meanr.mean)
+  
+#  names(return.vals) <- c("mean.geomean.gr", "sd.all.gr", "sd.pop.gr", "sd.mean.gr", "max.mean.gr", "min.mean.gr", "var.mean.gr", "max.max.gr", "min.min.gr", "mean.mean.gr")
+ 
+  return.vals <- list(armeanpopargrates, sd.arpop, meanpopsds, sdpopsds, popsds, popargrlist2)#, geomeanr2, sd.mr2, popgeogrlist2, popsdlist2)
+  
+  names(return.vals) <- c("Mean of Population Mean Log Growth Rates",
+                          "Standard Deviation of Population Mean Log Growth Rates",
+                          "Mean of Population Growth Rate Standard Deviations",
+                          "Standard Deviation of Population Growth Rate Standard Deviations",
+                          "Population Standard Deviations of Growth Rates",
+                          "Population Mean Growth Rates by Species")#,
+                          #"Species Arithmetic Means of Population Geometric Mean Growth Rates",
+                          #"Species Standard Deviations of Population Geometric Mean Growth Rates",
+                          #"Pop Geo Mean Growth Rates by Species",
+                          #"Pop Growth Rate St Dev by Species")
+   
+  return(return.vals)
+  
+}
+
 # create a database of artificial populations
 # randomized change points ensure trends are not linear
 # this version runs the creation process separately for each species
@@ -3247,3 +3458,84 @@ pgrowth4.4 <- function(tpops, tmax, gr_mean, gr_sd_vec, popspec) {
   return(all_pops)
   
 }
+
+# create a database of artificial populations
+pgrowth4.5 <- function(tpops, tmax, gr_mean, gr_sd_vec, popspec, sd_mean) {
+  
+  all_pops <- matrix(NA, nrow = tpops, ncol = tmax+1) # create matrix to put all the population counts
+  
+  spec_id <- sample(1:(tpops/popspec), tpops, replace = TRUE) # assign each population to a species
+  
+  all_pops[,tmax+1] <- t(spec_id) # fill the final column of the matrix with the species IDs
+  
+  # create normal distribution of species mean growth rates
+  specmeangrdist <- rnorm(length(unique(spec_id)), mean=gr_mean, sd=gr_sd_vec)
+  
+  # create exponential distribution of population standard deviations of growth rates
+  popsddist <- rexp(nrow(all_pops), rate=1/sd_mean)
+
+  for (i in unique(spec_id)) { # loop over each species
+    
+    if (is.null(nrow(all_pops[all_pops[,tmax+1]==i,]))) { # check if there are no populations assigned to this species
+      
+      next
+      
+    }
+    
+    # create temporary matrix to fill with species growth rates
+    spec_data <- all_pops[all_pops[,tmax+1]==i,1:tmax]
+    
+    # randomly select species mean growth rate from normal distribution
+    specmean <- sample(specmeangrdist, 1)
+    
+    # randomly select standard deviation of mean growth rate from a sequence between 0 and dataset st.dev
+    specsd <- sample(seq(0, gr_sd_vec, by=0.01), 1)
+    
+    # create normal distribution of population mean growth rates
+    popmeangrdist <- rnorm(nrow(spec_data), mean=specmean, sd=specsd)
+    
+    for (j in 1:nrow(spec_data)) { # loop over all populations in species i
+
+      # randomly select a mean growth rate for this population from normal distribution
+      popmean <- sample(popmeangrdist, 1) 
+      
+      # randomly select a standard deviation of growth rates for this population from exponential dist
+      popsd <- sample(popsddist, 1)
+
+      # assign growth rates to each population in this species
+      spec_data[j,] <- rlnorm(tmax, meanlog=popmean, sdlog=popsd)
+      
+    }
+    
+    # put the species growth rates into the population matrix
+    all_pops[all_pops[,tmax+1]==i,1:tmax] <- spec_data
+    
+  }
+  
+  # loop over each population
+  for (i in 1:tpops) {
+    
+    # calculate cumulative product of growth rates
+    ts <- cumprod(all_pops[i,1:tmax])
+    
+    # convert to index, starting at value of 100. year 1 is the base year
+    ts <- (ts/ts[1])*100
+    
+    # put the index values into the matrix
+    all_pops[i,1:tmax] <- ts
+    
+  }
+  
+  # name the columns
+  colnames(all_pops) <- c(1:(ncol(all_pops)-1), "SpecID")
+  
+  # convert to data frame
+  all_pops <- as.data.frame(all_pops)
+  
+  # remove any NA values
+  all_pops <- all_pops[complete.cases(all_pops),]
+  
+  return(all_pops)
+  
+}
+
