@@ -305,12 +305,12 @@ degrade_ts_fn_clustend <- function(all_pops_index, c, mlength=10, numobs=5, clus
 }
 
 # function to shorten and degrade time series
-degrade_ts_fn_endreveal <- function(all_pops_index, c, mlength=10, numobs=5, endlength=5) {
+degrade_ts_fn_endreveal <- function(all_pops_index, c, mlength=10, numobs=5, endlength=5, endreveal_ratio=0.5) {
   
   # sample rows for random endreveal
-  rev_rows <- sample(1:nrow(all_pops_index), ceiling(0.5*nrow(all_pops_index)))
+  rev_rows <- sample(1:nrow(all_pops_index), ceiling(endreveal_ratio*nrow(all_pops_index)))
   # save x final values, where x is endlength
-  reveal <- all_pops_index[,(c-endlength+1):c]
+  reveal <- as.data.frame(all_pops_index[,(c-endlength+1):c])
   
   # create a Poisson distribution around the mean length of time series
   # restricted between 2 and the starting length of the t.s.

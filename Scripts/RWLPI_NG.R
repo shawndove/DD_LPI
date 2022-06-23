@@ -433,7 +433,9 @@ for (i in 1:length(pop_list)) {
   if (nrow(grp_completed) >=1) {
     
     # get mean and standard deviation of the mean growth rate
-    gr.stats.list[[i]] <- growth_rate_calc_fn(grp_completed[,1:c2], model=TRUE)
+    #gr.stats.list[[i]] <- growth_rate_calc_fn(grp_completed[,1:c2], model=TRUE)
+    #gr.stats.list[[i]] <- growth_rate_calc_fn2(grp_completed, c2=c2, model=TRUE)
+    gr.stats.list[[i]] <- growth_rate_calc_fn3(grp_completed, c2=c2, model=TRUE)
     
   } else {
     
