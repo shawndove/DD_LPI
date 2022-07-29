@@ -1,2 +1,2 @@
-# RW_LPI
- A reliability weighted version of the Living Planet Index
+# DD_LPI
+ An exploration of trend reliability and data deficiency in the Living Planet Index
