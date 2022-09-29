@@ -1,2 +1,0 @@
-ID,min_year,max_year
-15006,1989,1995
