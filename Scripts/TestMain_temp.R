@@ -75,6 +75,17 @@ all_fn <- function(popvar,
     # create synthetic populations, assigned to different species
     all_pops_index <- pgrowth4.5(tpops, tmax, popmean, popvar, popspec, sdmean)
     
+    
+  } else if (pgrowthx == 8) {
+    
+    # create synthetic populations, assigned to different species
+    all_pops_index <- pgrowth4.7(tpops, tmax, popmean, popvar, popspec, sdmean)
+    
+  } else if (pgrowthx == 9) {
+    
+    # create synthetic populations, assigned to different species
+    all_pops_index <- pgrowth4.8(tpops, tmax, popmean, popvar, popspec, sdmean)
+    
   } else("Check your synthetic data generator function input setting.")
 
   # save raw synthetic dataset
@@ -284,29 +295,6 @@ all_fn <- function(popvar,
   msi_ci_real <- ci_fn(full_spec_real, c, m_colnames, grouplevel=1)
   saveRDS(msi_ci_real, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_msi_ci_TrueTrend.RData", sep=""))
   
-  cat(paste0("Plotting true trend.\n"))
-  
-  # plot trend
-  plot_msi <- msi_real
-  plot_ci <- msi_ci_real
-  
-  png(file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_msi_TrueTrend.png", sep=""),
-      width = 1280, height = 720, units = "px", pointsize = 12, bg = "white")
-  
-  par(mar=c(6,6,6,2) + 0.1)
-  plot(m_colnames, plot_msi, xlab="", ylab="", type="l", lty=1, ylim=c(max(c(0, min(plot_ci)-10)),max(plot_ci)+10), lwd=3, frame.plot=TRUE,
-       cex.lab=1.5, cex.axis=1.5,
-       panel.first = polygon(c(min(m_colnames):max(m_colnames), max(m_colnames):min(m_colnames)), c(plot_ci[2,], rev(plot_ci[1,])), col="grey90", border = NA))
-  lines(m_colnames, plot_ci[2,], lty=2, lwd=2)
-  lines(m_colnames, plot_ci[1,], lty=2, lwd=2)
-  lines(m_colnames, g.gam, lty=1, lwd=3, col="red")
-  grid(col="grey85", lty=2)
-  mtext(text = "Year", side = 1, line = 4, cex = 1.5)
-  mtext(text = "Index", side = 2, line = 3.5, cex = 1.5)
-  
-  dev.off()
-  
-  
   #temp <- method_fn(grp_data_culled, sample_pop_id_list, msi_real, c, m_colnames, n=NA, n_boot=NA, iter_num, samp_size, bootstrap_size, method="nores")
   
   temp <- method_fn(grp_data_culled, sample_pop_id_list, msi_real, c, m_colnames, n=NA, n_boot=NA, iter_num, samp_size, bootstrap_size, method="lambda")
@@ -321,11 +309,11 @@ all_fn <- function(popvar,
   ## DATA GATHERING ##
   
   # get mean and standard deviation of the mean growth rate
-  gr.stats.raw <- growth_rate_calc_fn3(all_pops_index)
+  gr.stats.raw <- growth_rate_calc_fn3(all_pops_index, c)
   
   all_pops_completed <- complete_time_series(all_pops_degraded, c, m_colnames, calcsd=TRUE)
   
-  gr.stats.degraded <- growth_rate_calc_fn3(all_pops_completed, model=TRUE)
+  gr.stats.degraded <- growth_rate_calc_fn3(all_pops_completed, c, model=TRUE)
   
   # create csv file with important info about the dataset
   info.dat <- data.frame(row.names = "1")
@@ -344,8 +332,8 @@ all_fn <- function(popvar,
   info.dat$mean_sd_degraded <- gr.stats.degraded[[3]]
   info.dat$samp_size <- samp_size
   info.dat$pops_per_species <- popspec
-  info.dat$mean_ts_length <- sum(!is.na(as.vector(all_pops_completed[,1:50]))) / nrow(all_pops_completed)
-  info.dat$mean_num_obs <- sum(!is.na(as.vector(all_pops_degraded[,1:50]))) / nrow(all_pops_degraded)
+  info.dat$mean_ts_length <- sum(!is.na(as.vector(all_pops_completed[,1:c]))) / nrow(all_pops_completed)
+  info.dat$mean_num_obs <- sum(!is.na(as.vector(all_pops_degraded[,1:c]))) / nrow(all_pops_degraded)
   info.dat$degrade_type <- degrade
   info.dat$error <- error
   info.dat$mean_cv <- mean_cv
@@ -360,9 +348,9 @@ all_fn <- function(popvar,
     
     temp <- all_pops_degraded[all_pops_degraded$PopID %in% sample_pop_id_list[[i]],]
     temp2 <- complete_time_series(temp, c, m_colnames, calcsd=TRUE)
-    gr.stats.samples[[i]] <- growth_rate_calc_fn3(temp2, model=TRUE)
-    tslength.samples[i] <- sum(!is.na(as.vector(temp2[,1:50]))) / nrow(temp2)
-    numobs.samples[i] <- sum(!is.na(as.vector(temp[,1:50]))) / nrow(temp)
+    gr.stats.samples[[i]] <- growth_rate_calc_fn3(temp2, c, model=TRUE)
+    tslength.samples[i] <- sum(!is.na(as.vector(temp2[,1:c]))) / nrow(temp2)
+    numobs.samples[i] <- sum(!is.na(as.vector(temp[,1:c]))) / nrow(temp)
     
   }
 
@@ -500,6 +488,400 @@ foreach(i = 1:3000) %dopar% {  # loop for parallel processing
          degrade = "normal", # data degradation method
          mean_cv = mean_cv, # mean coefficient of variation for observation error
          cv_sd = cv_sd,# standard deviation of coefficient of variation for observation error
+         clustlength=10, # length of time series to be added for clustend degradation method
+         endlength=1, # how many observations to reveal at the final year(s) for endreveal degradation method
+         endpops_ratio=1,  # fraction of populations to add for clustend degradation method
+         endreveal_ratio=1)
+}
+sink()
+stopCluster(cl) # stop the cluster
+
+
+#########
+# test different total trend lengths
+#########
+
+## Setup Testing ----
+
+iter_num <- 83000
+gr_mean_a <- 0
+gr_sd_vec_a <- 0.4
+sd_mean <- 0.6
+popspec <- 20
+mlength_ <- 20
+numobs_ <- ceiling(0.5*mlength_)
+samp_size_ <- 200
+tmax <- rep(c(30, 40, 50, 60, 70, 80, 90, 100), each=20)
+c <- tmax
+tpops <- 1000
+m_colnames <- 1:c
+mean_cv <- 0
+cv_sd <- 0
+pgrowthx <- 7
+
+## load external functions ----
+
+source("Scripts/Functions_NG.R")
+source("Scripts/TestMethods_NG.R")
+source("Scripts/DegradeTSVersions_NG.R")
+
+
+no_cores <- 8 # the number of cores to be used for parallel processing
+cl <- makeCluster(no_cores, outfile="TestData/output.txt") # create cluster for parallel processing
+registerDoSNOW(cl) # register the cluster
+clusterEvalQ(cl, c(library(tcltk),  # send necessary functions to the cluster
+                   library(dplyr), 
+                   library(MASS), 
+                   library(GET), 
+                   library(mgcv), 
+                   library(reshape2), 
+                   library(matrixStats),
+                   library(TSdist)))
+
+sink(file="console_output.txt", split=TRUE)
+# call the main function
+foreach(i = 1:160) %dopar% {  # loop for parallel processing
+  c <- tmax[i]
+  m_colnames <- 1:c
+  all_fn(popvar = gr_sd_vec_a, # variance in mean growth rate
+         popmean = gr_mean_a, # mean growth rate
+         sdmean =  sd_mean, # mean of standard deviations in growth rates
+         pgrowthx = 7, # which time series generator to use
+         iter_num = (iter_num+i), 
+         tmax = tmax[i], # number of years
+         tpops = tpops, # total number of time series
+         popspec = popspec, # mean number of populations per species
+         n = n, # number of GAM resamples 
+         n_boot = n_boot, # number of index bootstraps for each species
+         ngrps = ngrps, # number of groups to divide time series into
+         count_thres = count_thres, # minimum number of population counts
+         min_ts_length = min_ts_length, # minimum time series length
+         c = c, # number of columns (years: same as tmax)
+         samp_size = samp_size_, # number of time series in each sample
+         m_colnames = m_colnames, # column names
+         mlength = mlength_, # mean length of time series 
+         numobs = numobs_, # mean number of observations in each time series
+         bootstrap_size = bootstrap_size, # number of samples
+         error = TRUE,  # add observation error
+         degrade = "normal", # data degradation method
+         mean_cv = mean_cv, # mean coefficient of variation for observation error
+         cv_sd = cv_sd,# standard deviation of coefficient of variation for observation error
+         clustlength=10, # length of time series to be added for clustend degradation method
+         endlength=1, # how many observations to reveal at the final year(s) for endreveal degradation method
+         endpops_ratio=1,  # fraction of populations to add for clustend degradation method
+         endreveal_ratio=1)
+}
+sink()
+stopCluster(cl) # stop the cluster
+
+
+#########
+# test different numbers of pops/species
+#########
+
+## Setup Testing ----
+
+iter_num <- 84200
+gr_mean_a <- 0
+gr_sd_vec_a <- 0.2
+sd_mean <- 0.2
+popspec <- rep(c(5, 10, 15, 20, 30, 50), each=20)
+mlength_ <- 20
+numobs_ <- ceiling(0.5*mlength_)
+samp_size_ <- 200
+tmax <- 50
+c <- tmax
+tpops <- 1000
+m_colnames <- 1:c
+mean_cv <- 0.15
+cv_sd <- 0.1
+pgrowthx <- 7
+
+## load external functions ----
+
+source("Scripts/Functions_NG.R")
+source("Scripts/TestMethods_NG.R")
+source("Scripts/DegradeTSVersions_NG.R")
+
+
+no_cores <- 8 # the number of cores to be used for parallel processing
+cl <- makeCluster(no_cores, outfile="TestData/output.txt") # create cluster for parallel processing
+registerDoSNOW(cl) # register the cluster
+clusterEvalQ(cl, c(library(tcltk),  # send necessary functions to the cluster
+                   library(dplyr), 
+                   library(MASS), 
+                   library(GET), 
+                   library(mgcv), 
+                   library(reshape2), 
+                   library(matrixStats),
+                   library(TSdist)))
+
+sink(file="console_output.txt", split=TRUE)
+# call the main function
+foreach(i = 1:120) %dopar% {  # loop for parallel processing
+  all_fn(popvar = gr_sd_vec_a, # variance in mean growth rate
+         popmean = gr_mean_a, # mean growth rate
+         sdmean =  sd_mean, # mean of standard deviations in growth rates
+         pgrowthx = pgrowthx, # which time series generator to use
+         iter_num = (iter_num+i), 
+         tmax = tmax, # number of years
+         tpops = tpops, # total number of time series
+         popspec = popspec[i], # mean number of populations per species
+         n = n, # number of GAM resamples 
+         n_boot = n_boot, # number of index bootstraps for each species
+         ngrps = ngrps, # number of groups to divide time series into
+         count_thres = count_thres, # minimum number of population counts
+         min_ts_length = min_ts_length, # minimum time series length
+         c = c, # number of columns (years: same as tmax)
+         samp_size = samp_size_, # number of time series in each sample
+         m_colnames = m_colnames, # column names
+         mlength = mlength_, # mean length of time series 
+         numobs = numobs_, # mean number of observations in each time series
+         bootstrap_size = bootstrap_size, # number of samples
+         error = TRUE,  # add observation error
+         degrade = "normal", # data degradation method
+         mean_cv = mean_cv, # mean coefficient of variation for observation error
+         cv_sd = cv_sd,# standard deviation of coefficient of variation for observation error
+         clustlength=10, # length of time series to be added for clustend degradation method
+         endlength=1, # how many observations to reveal at the final year(s) for endreveal degradation method
+         endpops_ratio=1,  # fraction of populations to add for clustend degradation method
+         endreveal_ratio=1)
+}
+sink()
+stopCluster(cl) # stop the cluster
+
+
+#########
+# test different timepoint distributions
+#########
+
+## Setup Testing ----
+
+iter_num <- 84400
+gr_mean_a <- 0
+gr_sd_vec_a <- 0.2
+sd_mean <- 0.2
+popspec <- 20
+mlength_ <- 25
+numobs_ <- ceiling(0.5*mlength_)
+samp_size_ <- 200
+tmax <- 50
+c <- tmax
+tpops <- 1000
+m_colnames <- 1:c
+mean_cv <- 0.15
+cv_sd <- 0.1
+pgrowthx <- 7
+
+d_method <- rep(c("normal", "endpoints"), each=40)
+
+## load external functions ----
+
+source("Scripts/Functions_NG.R")
+source("Scripts/TestMethods_NG.R")
+source("Scripts/DegradeTSVersions_NG.R")
+
+
+no_cores <- 8 # the number of cores to be used for parallel processing
+cl <- makeCluster(no_cores, outfile="TestData/output.txt") # create cluster for parallel processing
+registerDoSNOW(cl) # register the cluster
+clusterEvalQ(cl, c(library(tcltk),  # send necessary functions to the cluster
+                   library(dplyr), 
+                   library(MASS), 
+                   library(GET), 
+                   library(mgcv), 
+                   library(reshape2), 
+                   library(matrixStats),
+                   library(TSdist)))
+
+sink(file="console_output.txt", split=TRUE)
+# call the main function
+foreach(i = 1:80) %dopar% {  # loop for parallel processing
+  all_fn(popvar = gr_sd_vec_a, # variance in mean growth rate
+         popmean = gr_mean_a, # mean growth rate
+         sdmean =  sd_mean, # mean of standard deviations in growth rates
+         pgrowthx = 7, # which time series generator to use
+         iter_num = (iter_num+i), 
+         tmax = tmax, # number of years
+         tpops = tpops, # total number of time series
+         popspec = popspec, # mean number of populations per species
+         n = n, # number of GAM resamples 
+         n_boot = n_boot, # number of index bootstraps for each species
+         ngrps = ngrps, # number of groups to divide time series into
+         count_thres = count_thres, # minimum number of population counts
+         min_ts_length = min_ts_length, # minimum time series length
+         c = c, # number of columns (years: same as tmax)
+         samp_size = samp_size_, # number of time series in each sample
+         m_colnames = m_colnames, # column names
+         mlength = mlength_, # mean length of time series 
+         numobs = numobs_, # mean number of observations in each time series
+         bootstrap_size = bootstrap_size, # number of samples
+         error = TRUE,  # add observation error
+         degrade = d_method[i], # data degradation method
+         mean_cv = mean_cv, # mean coefficient of variation for observation error
+         cv_sd = cv_sd,# standard deviation of coefficient of variation for observation error
+         clustlength=10, # length of time series to be added for clustend degradation method
+         endlength=1, # how many observations to reveal at the final year(s) for endreveal degradation method
+         endpops_ratio=1,  # fraction of populations to add for clustend degradation method
+         endreveal_ratio=1)
+}
+sink()
+stopCluster(cl) # stop the cluster
+
+
+#########
+# test different dataset sizes
+#########
+
+## Setup Testing ----
+
+iter_num <- 82800
+gr_mean_a <- 0
+gr_sd_vec_a <- 0.4
+sd_mean <- 0.6
+popspec <- 10
+mlength_ <- 20
+numobs_ <- ceiling(0.5*mlength_)
+samp_size_ <- 50
+tmax <- 50
+c <- tmax
+tpops <- rep(c(50, 100, 200, 500, 1000, 2000, 5000, 10000), each=10)
+m_colnames <- 1:c
+mean_cv <- 0
+cv_sd <- 0
+pgrowthx <- 7
+
+## load external functions ----
+
+source("Scripts/Functions_NG.R")
+source("Scripts/TestMethods_NG.R")
+source("Scripts/DegradeTSVersions_NG.R")
+
+
+no_cores <- 8 # the number of cores to be used for parallel processing
+cl <- makeCluster(no_cores, outfile="TestData/output.txt") # create cluster for parallel processing
+registerDoSNOW(cl) # register the cluster
+clusterEvalQ(cl, c(library(tcltk),  # send necessary functions to the cluster
+                   library(dplyr), 
+                   library(MASS), 
+                   library(GET), 
+                   library(mgcv), 
+                   library(reshape2), 
+                   library(matrixStats),
+                   library(TSdist)))
+
+sink(file="console_output.txt", split=TRUE)
+# call the main function
+foreach(i = 1:80) %dopar% {  # loop for parallel processing
+  all_fn(popvar = gr_sd_vec_a, # variance in mean growth rate
+         popmean = gr_mean_a, # mean growth rate
+         sdmean =  sd_mean, # mean of standard deviations in growth rates
+         pgrowthx = 7, # which time series generator to use
+         iter_num = (iter_num+i), 
+         tmax = tmax, # number of years
+         tpops = tpops[i], # total number of time series
+         popspec = popspec, # mean number of populations per species
+         n = n, # number of GAM resamples 
+         n_boot = n_boot, # number of index bootstraps for each species
+         ngrps = ngrps, # number of groups to divide time series into
+         count_thres = count_thres, # minimum number of population counts
+         min_ts_length = min_ts_length, # minimum time series length
+         c = c, # number of columns (years: same as tmax)
+         samp_size = samp_size_, # number of time series in each sample
+         m_colnames = m_colnames, # column names
+         mlength = mlength_, # mean length of time series 
+         numobs = numobs_, # mean number of observations in each time series
+         bootstrap_size = bootstrap_size, # number of samples
+         error = TRUE,  # add observation error
+         degrade = "normal", # data degradation method
+         mean_cv = mean_cv, # mean coefficient of variation for observation error
+         cv_sd = cv_sd,# standard deviation of coefficient of variation for observation error
+         clustlength=10, # length of time series to be added for clustend degradation method
+         endlength=1, # how many observations to reveal at the final year(s) for endreveal degradation method
+         endpops_ratio=1,  # fraction of populations to add for clustend degradation method
+         endreveal_ratio=1)
+}
+sink()
+stopCluster(cl) # stop the cluster
+
+
+
+#########
+# test different amounts of observation error
+#########
+
+## Setup Testing ----
+
+iter_num <- 80800
+gr_mean_a <- 0
+gr_sd_vec_a <- 0.2
+sd_mean <- 0.2
+popspec <- 20
+mlength_ <- 20
+numobs_ <- ceiling(0.5*mlength_)
+samp_size_ <- 200
+tmax <- 50
+c <- tmax
+tpops <- 1000
+m_colnames <- 1:c
+mean_cv <- rep(c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 2), each=20)
+cv_sd <- rep(c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 2), each=20)
+pgrowthx <- 7
+
+#d_method <- rep(c("normal", "clustend", "endreveal"), each=50)
+#cl_length <- rep(c(1, 3, 6, 10, 3, 
+#                  6, 10, 3, 6, 10, 
+#                 1, 1, 1), each=100)
+#e_ratio <-rep(c(1, 0.2, 1), each=50)
+#er_ratio <- rep(c(1, 1, 1, 1, 1, 
+#                 1, 1, 1, 1, 1, 
+#                0.25, 0.5, 1), each=100)
+
+## load external functions ----
+
+source("Scripts/Functions_NG.R")
+source("Scripts/TestMethods_NG.R")
+source("Scripts/DegradeTSVersions_NG.R")
+
+
+no_cores <- 8 # the number of cores to be used for parallel processing
+cl <- makeCluster(no_cores, outfile="TestData/output.txt") # create cluster for parallel processing
+registerDoSNOW(cl) # register the cluster
+clusterEvalQ(cl, c(library(tcltk),  # send necessary functions to the cluster
+                   library(dplyr), 
+                   library(MASS), 
+                   library(GET), 
+                   library(mgcv), 
+                   library(reshape2), 
+                   library(matrixStats),
+                   library(TSdist)))
+
+sink(file="console_output.txt", split=TRUE)
+# call the main function
+foreach(i = 1:160) %dopar% {  # loop for parallel processing
+  all_fn(popvar = gr_sd_vec_a, # variance in mean growth rate
+         popmean = gr_mean_a, # mean growth rate
+         sdmean =  sd_mean, # mean of standard deviations in growth rates
+         pgrowthx = 7, # which time series generator to use
+         iter_num = (iter_num+i), 
+         tmax = tmax, # number of years
+         tpops = tpops, # total number of time series
+         popspec = popspec, # mean number of populations per species
+         n = n, # number of GAM resamples 
+         n_boot = n_boot, # number of index bootstraps for each species
+         ngrps = ngrps, # number of groups to divide time series into
+         count_thres = count_thres, # minimum number of population counts
+         min_ts_length = min_ts_length, # minimum time series length
+         c = c, # number of columns (years: same as tmax)
+         samp_size = samp_size_, # number of time series in each sample
+         m_colnames = m_colnames, # column names
+         mlength = mlength_, # mean length of time series 
+         numobs = numobs_, # mean number of observations in each time series
+         bootstrap_size = bootstrap_size, # number of samples
+         error = TRUE,  # add observation error
+         degrade = "normal", # data degradation method
+         mean_cv = mean_cv[i], # mean coefficient of variation for observation error
+         cv_sd = cv_sd[i],# standard deviation of coefficient of variation for observation error
          clustlength=10, # length of time series to be added for clustend degradation method
          endlength=1, # how many observations to reveal at the final year(s) for endreveal degradation method
          endpops_ratio=1,  # fraction of populations to add for clustend degradation method

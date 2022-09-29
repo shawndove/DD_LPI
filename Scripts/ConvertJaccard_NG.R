@@ -10,7 +10,9 @@ dir_names <- list.dirs(path="TestData",
                            recursive = FALSE)
 
 # remove unwanted directories
-dir_names <- dir_names[21390:24389]
+dir_names <- dir_names[26890:26969]
+#dir_names <- dir_names[24390:25069]
+#dir_names <- dir_names[21390:24389]
 #dir_names <- dir_names[19580:21149]
 #dir_names <- dir_names[5696:7695]
 dir_names <- paste(dir_names, "/", sep="")
@@ -64,10 +66,10 @@ for (z in 1:length(dir_names)) {
   trend.dev.list <- lapply(msi_final_samp_list, function(i) {jaccard(as.numeric(i), as.numeric(msi_real), testNA=FALSE)})
   trend.dev.matrix <- do.call(rbind, trend.dev.list)
   colnames(trend.dev.matrix) <- "MSI"
-  write.csv(trend.dev.matrix, file=paste(dir_name, "fixed35/", td_list[z], sep=""))
+  write.csv(trend.dev.matrix, file=paste(dir_name, "fixed36/", td_list[z], sep=""))
 
   mean.trend.dev <- mean(trend.dev.matrix, na.rm=TRUE)
-  write.csv(mean.trend.dev, file=paste(dir_name, "fixed35/", td_mean[z], sep=""))
+  write.csv(mean.trend.dev, file=paste(dir_name, "fixed36/", td_mean[z], sep=""))
 
 
 #  counter <- counter + 1

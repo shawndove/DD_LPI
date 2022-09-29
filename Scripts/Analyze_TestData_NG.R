@@ -1,14 +1,20 @@
+library(tidyr)
+library(ggplot2)
+library(ggpubr)
+library(grid)
+library(gridExtra)
 
 # save the test directory name to a variable
 dir_name <- "TestData/Testing2/"
-dir_name2 <- "TestData/Testing2/fixed35/"
+dir_name2 <- "TestData/Testing2/fixed36/"
 
 dir_names <- list.dirs(path="TestData", 
                        full.names = TRUE, 
                        recursive = FALSE)
 
 # remove unwanted directories
-dir_names <- dir_names[21390:24389]
+dir_names <- dir_names[26890:26969]
+#dir_names <- dir_names[21390:24389]
 #dir_names <- dir_names[11226:15705]
 #dir_names <- dir_names[11226:13465]
 #dir_names <- dir_names[5696:7695]
@@ -458,8 +464,8 @@ for (i in 1:length(info_list)) {
   
 }
 
-saveRDS(test_results, file="test_results.RData")
-saveRDS(test_results_m, file="test_results_m.RData")
+#saveRDS(test_results, file="test_results.RData")
+#saveRDS(test_results_m, file="test_results_m.RData")
 
 # remove datasets outside LPD parameter range
 test_results_mc <- test_results_m[test_results_m$SDGRSamp < 0.63 
@@ -666,3 +672,362 @@ ggsave("solutions.tiff",
        compression = "lzw")
 
 
+##########################################
+
+## build supplementary plots for trend length, number of pops per species,
+## clustered vs random distribution of time points, size of data set, and
+## amount of observation error -- data in fixed36 directory
+
+## prepare data for trend length graph
+trendlength <- test_results_m[test_results_m$ID<80200,]
+#trendlength <- test_results_m[test_results_m$ID>83000,]
+trendlength$TotalYears <- factor(trendlength$TotalYears)
+
+## prepare data for populations per species graph
+# popsperspec <- test_results_m[test_results_m$ID>80200 & 
+#                                 test_results_m$ID<80400 & 
+#                                 test_results_m$PopSpec>6 &
+#                                 test_results_m$PopSpec<150,]
+
+# popsperspec <- test_results_m[test_results_m$ID>83200 & 
+#                                 test_results_m$ID<83400 &
+#                                 test_results_m$PopSpec<80,]
+# 
+# popsperspec <- test_results_m[test_results_m$ID>83400 & 
+#                                 test_results_m$ID<83600 &
+#                                 test_results_m$PopSpec<80,]
+# 
+# popsperspec <- test_results_m[test_results_m$ID>83600 & 
+#                                 test_results_m$ID<83800 &
+#                                 test_results_m$PopSpec<80,]
+
+pps_norm <- test_results_m[test_results_m$ID>83800 & 
+                                test_results_m$ID<84000,]
+
+pps_norm$SampPopSpec <- 200/pps_norm$SampSpecSize
+
+pps_norm <- pps_norm %>%
+  mutate(PopSpec = cut(PopSpec, breaks=c(3,7,12,18,25,40,75),
+                       labels=c(5,10,15,20,30,50)))
+
+pps_exp <- test_results_m[test_results_m$ID>84000 & 
+                                test_results_m$ID<84200,]
+
+pps_exp$SampPopSpec <- 200/pps_exp$SampSpecSize
+
+pps_exp <- pps_exp %>%
+  mutate(PopSpec = cut(PopSpec, breaks=c(3,7,12,18,25,40,75),
+                       labels=c(5,10,15,20,30,50)))
+
+pps_nb <- test_results_m[test_results_m$ID>84200 & 
+                                test_results_m$ID<84400,]
+
+pps_nb$SampPopSpec <- 200/pps_nb$SampSpecSize
+ 
+pps_nb <- pps_nb %>%
+  mutate(PopSpec = cut(PopSpec, breaks=c(3,7,12,18,25,40,75),
+                       labels=c(5,10,15,20,30,50)))
+ 
+#popsperspec2$SampPopSpec <- factor(popsperspec2$SampPopSpec)
+
+#popsperspec2 <- popsperspec2 %>%
+#  mutate(SampPopSpec = cut(SampPopSpec, breaks=c(1,2,2.8,3.5,5,8,15),
+#                       labels=c(1.6,2.3,3.2,4.1,6.1,10)))
+
+## prepare data for timepoint distribution graph
+#tpdist <- test_results_m[test_results_m$ID>80400 & test_results_m$ID<80600,]
+
+tpdist <- test_results_m[test_results_m$ID>84400 & test_results_m$ID<84500,]
+
+tpdist$DegradeType <- factor(tpdist$DegradeType)
+
+## prepare data for dataset size graph
+#dssize <- test_results_m[test_results_m$ID>80600 & test_results_m$ID<80800,]
+#dssize <- test_results_m[test_results_m$ID>81000 & test_results_m$ID<82000,]
+dssize <- test_results_m[test_results_m$ID>82100 & test_results_m$ID<82200,]
+dssize <- test_results_m[test_results_m$ID>82200 & test_results_m$ID<82300,]
+dssize <- test_results_m[test_results_m$ID>82300 & test_results_m$ID<82400,]
+dssize <- test_results_m[test_results_m$ID>82400 & test_results_m$ID<82500,]
+dssize <- test_results_m[test_results_m$ID>82100 & test_results_m$SampSize==50,]
+#dssize <- test_results_m[(test_results_m$ID>80600 & test_results_m$ID<80800) | (test_results_m$ID>81000),]
+dssize$TotalPops <- rep(rep(c(50, 100, 200, 500, 1000, 2000, 5000, 10000), each=10),2)
+dssize$TotalPops <- factor(dssize$TotalPops)
+dssize <- dssize[dssize$TotalPops!=200,]
+dssize50 <- dssize
+
+dssize <- test_results_m[test_results_m$ID>82100 & test_results_m$SampSize==100,]
+dssize$TotalPops <- factor(dssize$TotalPops)
+dssize <- dssize[dssize$TotalPops!=150,]
+dssize100 <- dssize
+
+dssize <- test_results_m[test_results_m$ID>82100 & test_results_m$SampSize==500,]
+dssize$TotalPops <- c(rep(c(500, 1000, 2000, 5000, 10000), each=10), 
+                      rep(c(500, 1000, 2000, 5000, 10000), each=20),
+                      rep(c(500, 1000, 2000, 5000, 10000), each=20))
+dssize$TotalPops <- factor(dssize$TotalPops)
+dssize500 <- dssize
+
+dssize <- test_results_m[test_results_m$ID>82100 & test_results_m$SampSize==200,]
+dssize$TotalPops <- c(rep(c(200, 500, 1000, 2000, 5000, 10000), each=10), 
+                      rep(c(200, 500, 1000, 2000, 5000, 10000), each=15))
+dssize$TotalPops <- factor(dssize$TotalPops)
+dssize200 <- dssize
+
+
+## prepare data for observation error graph
+obserror <- test_results_m[test_results_m$ID>80800 & test_results_m$ID<81000,]
+
+obserror$ObsError <- rep(c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 2), each=20)
+
+obserror$ObsError <- factor(obserror$ObsError)
+
+## trend length
+
+ggplot(trendlength, aes(x=TotalYears, y=TrendDev))+
+  geom_boxplot(show.legend=FALSE, fill="skyblue")+
+  ylim(c(0,1))+
+  ylab("Trend Deviation Value")+
+  xlab("Number of Years Modelled")+
+  theme_bw()+
+  theme(axis.title.x=element_text(size=16),
+        axis.title.y=element_text(size=16),
+        axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(size = 16, hjust = 0.5),
+        panel.background = element_rect(fill="white"))
+
+ggsave("yearsmodelled.tiff",
+       device = tiff,
+       dpi = 1000,
+       compression = "lzw")
+
+## pops per species
+
+# uniform distribution
+pps_norm_plot <- ggplot(pps_norm, aes(x=PopSpec, y=TrendDev))+
+  geom_boxplot(show.legend=FALSE, fill="skyblue")+
+  #scale_x_discrete(labels=c("5", "10", "15", "20", "30", "50", "100", "200"))+
+  ylim(c(0,1))+
+  ylab("Trend Deviation Value")+
+  xlab("Mean Populations Per Species")+
+  ggtitle("Normal")+
+  theme_bw()+
+  theme(axis.title.x=element_text(size=14),
+        axis.title.y=element_text(size=14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5),
+        panel.background = element_rect(fill="white"))
+
+ggsave("popsperspec_normal.tiff",
+       device = tiff,
+       dpi = 1000,
+       compression = "lzw")
+
+# discretized exponential distribution
+pps_exp_plot <- ggplot(pps_exp, aes(x=PopSpec, y=TrendDev))+
+  geom_boxplot(show.legend=FALSE, fill="skyblue")+
+  #scale_x_discrete(labels=c("5", "10", "15", "20", "30", "50", "100", "200"))+
+  ylim(c(0,1))+
+  ylab("Trend Deviation Value")+
+  xlab("Mean Populations Per Species")+
+  ggtitle("Discretized Exponential")+
+  theme_bw()+
+  theme(axis.title.x=element_text(size=14),
+        axis.title.y=element_text(size=14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5),
+        panel.background = element_rect(fill="white"))
+
+ggsave("popsperspec_exponential.tiff",
+       device = tiff,
+       dpi = 1000,
+       compression = "lzw")
+
+# zero-truncated negative binomial distribution
+pps_nb_plot <- ggplot(pps_nb, aes(x=PopSpec, y=TrendDev))+
+  geom_boxplot(show.legend=FALSE, fill="skyblue")+
+  #scale_x_discrete(labels=c("5", "10", "15", "20", "30", "50", "100", "200"))+
+  ylim(c(0,1))+
+  ylab("Trend Deviation Value")+
+  xlab("Mean Populations Per Species")+
+  ggtitle("Negative Binomial")+
+  theme_bw()+
+  theme(axis.title.x=element_text(size=14),
+        axis.title.y=element_text(size=14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5),
+        panel.background = element_rect(fill="white"))
+
+ggsave("popsperspec_negbin.tiff",
+       device = tiff,
+       dpi = 1000,
+       compression = "lzw")
+
+ppsplot <- ggarrange(pps_norm_plot + rremove("ylab") + rremove("xlab"),
+                    pps_exp_plot + rremove("ylab") + rremove("xlab"),
+                    pps_nb_plot + rremove("ylab") + rremove("xlab"),
+                    ncol=3)
+
+annotate_figure(ppsplot,
+                left = textGrob("Trend Deviation Value",
+                                rot = 90, vjust = 0.5,
+                                gp = gpar(cex = 1.3)),
+                bottom = textGrob("Mean Populations Per Species",
+                                  hjust = 0.5,
+                                  gp = gpar(cex = 1.3)))
+
+ggsave("popsperspec_all.tiff",
+       device = tiff,
+       dpi = 1000,
+       compression = "lzw",
+       width = 9000,
+       height = 3000,
+       units = "px")
+
+## time point distribution
+
+ggplot(tpdist, aes(x=DegradeType, y=TrendDev, fill=factor(DegradeType)))+
+  geom_boxplot(show.legend=FALSE)+
+  scale_x_discrete(labels=c("Endpoint Clustering", "Random"))+
+  scale_fill_manual(values=c("skyblue", "orange"))+
+  ylim(c(0,0.4))+
+  ylab("Trend Deviation Value")+
+  xlab("Time Series Distribution")+
+  theme_bw()+
+  theme(axis.title.x=element_text(size=16),
+        axis.title.y=element_text(size=16),
+        axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(size = 16, hjust = 0.5),
+        panel.background = element_rect(fill="white"))
+
+ggsave("timepointdistribution.tiff",
+       device = tiff,
+       dpi = 1000,
+       compression = "lzw",
+       width = 9000,
+       height = 4000,
+       units = "px")
+
+## dataset size
+ds50 <- ggplot(dssize50, aes(x=TotalPops, y=TrendDev))+
+  geom_boxplot(show.legend=FALSE, fill="skyblue")+
+  scale_y_continuous(limits=c(0,1))+
+  ylab("TDV")+
+  xlab("Total Populations")+
+  ggtitle("Sample Size: 50")+
+  theme_bw()+
+  theme(axis.title.x=element_text(size=14),
+        axis.title.y=element_text(size=14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5),
+        panel.background = element_rect(fill="white"))
+
+ggsave("totalpops50.tiff",
+       device = tiff,
+       dpi = 1000,
+       compression = "lzw")
+
+ds100 <- ggplot(dssize100, aes(x=TotalPops, y=TrendDev))+
+  geom_boxplot(show.legend=FALSE, fill="skyblue")+
+  scale_y_continuous(limits=c(0,1))+
+  ylab("TDV")+
+  xlab("Total Populations")+
+  ggtitle("Sample Size: 100")+
+  theme_bw()+
+  theme(axis.title.x=element_text(size=14),
+        axis.title.y=element_text(size=14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5),
+        panel.background = element_rect(fill="white"))
+
+ggsave("totalpops100.tiff",
+       device = tiff,
+       dpi = 1000,
+       compression = "lzw")
+
+ds200 <- ggplot(dssize200, aes(x=TotalPops, y=TrendDev))+
+  geom_boxplot(show.legend=FALSE, fill="skyblue")+
+  scale_y_continuous(limits=c(0,1))+
+  ylab("TDV")+
+  xlab("Total Populations")+
+  ggtitle("Sample Size: 200")+
+  theme_bw()+
+  theme(axis.title.x=element_text(size=14),
+        axis.title.y=element_text(size=14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5),
+        panel.background = element_rect(fill="white"))
+
+ggsave("totalpops200.tiff",
+       device = tiff,
+       dpi = 1000,
+       compression = "lzw")
+
+ds500 <- ggplot(dssize500, aes(x=TotalPops, y=TrendDev))+
+  geom_boxplot(show.legend=FALSE, fill="skyblue")+
+  scale_y_continuous(limits=c(0,1))+
+  ylab("TDV")+
+  xlab("Total Populations")+
+  ggtitle("Sample Size: 500")+
+  theme_bw()+
+  theme(axis.title.x=element_text(size=14),
+        axis.title.y=element_text(size=14),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 16, hjust = 0.5),
+        panel.background = element_rect(fill="white"))
+
+ggsave("totalpops500.tiff",
+       device = tiff,
+       dpi = 1000,
+       compression = "lzw")
+
+dsplot <- ggarrange(ds50 + rremove("ylab") + rremove("xlab"),
+                    ds100 + rremove("ylab") + rremove("xlab"),
+                    ds200 + rremove("ylab") + rremove("xlab"),
+                    ds500 + rremove("ylab") + rremove("xlab"),
+                    ncol=2, nrow=2)
+
+annotate_figure(dsplot,
+                left = textGrob("Trend Deviation Value",
+                                rot = 90, vjust = 0.5,
+                                gp = gpar(cex = 1.3)),
+                bottom = textGrob("Total Populations",
+                                  hjust = 0.5,
+                                  gp = gpar(cex = 1.3)))
+
+ggsave("totalpopsall.tiff",
+       device = tiff,
+       dpi = 1000,
+       compression = "lzw")
+
+## observation error
+
+ggplot(obserror, aes(x=ObsError, y=TrendDev))+
+  geom_boxplot(show.legend=FALSE, fill="skyblue")+
+  scale_x_discrete(labels=c("0%", "10%", "20%", "40%", "60%", "80%", "100%", "200%"))+
+  ylim(c(0,0.6))+
+  ylab("Trend Deviation Value")+
+  xlab("Percent Observation Error")+
+  theme_bw()+
+  theme(axis.title.x=element_text(size=16),
+        axis.title.y=element_text(size=16),
+        axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(size = 16, hjust = 0.5),
+        panel.background = element_rect(fill="white"))
+
+ggsave("observationerror.tiff",
+       device = tiff,
+       dpi = 1000,
+       compression = "lzw",
+       width = 10000,
+       height = 5000,
+       units = "px")

@@ -130,7 +130,7 @@ method_fn <- function(grp_data_culled, sample_pop_id_list, msi_real, c, m_colnam
     
     # create final msi as mean of all msi bootstraps
     msi_final <- colMeans(msi_full, na.rm=TRUE)
-    saveRDS(msi_full, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_msi_final_", method, ".RData", sep=""))
+    saveRDS(msi_final, file=paste("TestData/", iter_num, "/saved_synth_", iter_num, "_msi_final_", method, ".RData", sep=""))
     
   } else {
     
