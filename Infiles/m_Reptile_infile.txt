@@ -1,2 +1,0 @@
-"FileName"	"Group"	"Weighting"
-"Infiles/m_Reptile_pops.txt"	1	1

@@ -1,2 +1,2 @@
 "FileName"	"Group"	"Weighting"
-"Infiles/T_IndoPacific_Aves_pops.txt"	1	1
+"Infiles2/T_IndoPacific_Aves_pops.txt"	1	1

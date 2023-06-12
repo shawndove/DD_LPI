@@ -1,2 +1,0 @@
-"FileName"	"Group"	"Weighting"
-"Infiles/fw_Mammalia_model_pops.txt"	1	1
