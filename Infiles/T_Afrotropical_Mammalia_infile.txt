@@ -1,2 +1,0 @@
-"FileName"	"Group"	"Weighting"
-"Infiles2/T_Afrotropical_Mammalia_pops.txt"	1	1
