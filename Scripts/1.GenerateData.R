@@ -78,7 +78,7 @@ no_cores <- 8 # the number of cores to be used for parallel processing
 
 ## set directory to store datasets ----
 
-test_dir <- "TestData2"
+test_dir <- "TestData"
 if(!dir.exists(paste(test_dir, "/", sep=""))) {dir.create(paste(test_dir, "/", sep=""))} # create directory
 
 #########
@@ -287,7 +287,6 @@ stopCluster(cl) # stop the cluster
 #########
 
 
-
 ### part 1 of 4: sample size 50
 
 ## set parameters ----
@@ -301,10 +300,10 @@ mlength_ <- 20
 numobs_ <- ceiling(0.5*mlength_)
 samp_size_ <- 50
 tmax <- 50
-tpops <- rep(c(50, 100, 200, 500, 1000, 2000, 5000, 10000), each=20)
+tpops <- rep(c(50, 100, 200, 500, 1000, 2000, 5000, 10000), each=10)
 mean_cv <- 0.15
 cv_sd <- 0.1
-dir_name <- "TestData2/DSSize"
+dir_name <- "TestData/DSSize"
 
 if(!dir.exists(paste(dir_name, "/", sep=""))) {dir.create(paste(dir_name, "/", sep=""))} # create directory
 
@@ -323,7 +322,7 @@ clusterEvalQ(cl, c(library(tcltk),  # send necessary functions to the cluster
 
 ## call main function ----
 
-foreach(i = 1:160) %dopar% {  # loop for parallel processing
+foreach(i = 1:80) %dopar% {  # loop for parallel processing
   main_fn(iter_num = (iter_num+i), # ID number for dataset
           dir_name = dir_name, # name of directory to save the dataset(s)
           popvar = gr_sd_vec_a, # variance in mean growth rate
@@ -356,7 +355,7 @@ stopCluster(cl) # stop the cluster
 
 ## set parameters ----
 
-iter_num <- 82200
+iter_num <- 82100
 gr_mean_a <- 0
 gr_sd_vec_a <- 0.3
 sd_mean <- 0.4
@@ -365,10 +364,10 @@ mlength_ <- 20
 numobs_ <- ceiling(0.5*mlength_)
 samp_size_ <- 100
 tmax <- 50
-tpops <- rep(c(100, 200, 500, 1000, 2000, 5000, 10000), each=20)
+tpops <- rep(c(100, 200, 500, 1000, 2000, 5000, 10000), each=10)
 mean_cv <- 0.15
 cv_sd <- 0.1
-dir_name <- "TestData2/DSSize"
+dir_name <- "TestData/DSSize"
 
 if(!dir.exists(paste(dir_name, "/", sep=""))) {dir.create(paste(dir_name, "/", sep=""))} # create directory
 
@@ -387,7 +386,7 @@ clusterEvalQ(cl, c(library(tcltk),  # send necessary functions to the cluster
 
 ## call main function ----
 
-foreach(i = 1:140) %dopar% {  # loop for parallel processing
+foreach(i = 1:70) %dopar% {  # loop for parallel processing
   main_fn(iter_num = (iter_num+i), # ID number for dataset
          dir_name = dir_name, # name of directory to save the dataset(s)
          popvar = gr_sd_vec_a, # variance in mean growth rate
@@ -420,7 +419,7 @@ stopCluster(cl) # stop the cluster
 
 ## set parameters ----
 
-iter_num <- 82400
+iter_num <- 82200
 gr_mean_a <- 0
 gr_sd_vec_a <- 0.3
 sd_mean <- 0.4
@@ -429,10 +428,10 @@ mlength_ <- 20
 numobs_ <- ceiling(0.5*mlength_)
 samp_size_ <- 200
 tmax <- 50
-tpops <- rep(c(200, 500, 1000, 2000, 5000, 10000), each=20)
+tpops <- rep(c(200, 500, 1000, 2000, 5000, 10000), each=10)
 mean_cv <- 0.15
 cv_sd <- 0.1
-dir_name <- "TestData2/DSSize"
+dir_name <- "TestData/DSSize"
 
 if(!dir.exists(paste(dir_name, "/", sep=""))) {dir.create(paste(dir_name, "/", sep=""))} # create directory
 
@@ -451,7 +450,7 @@ clusterEvalQ(cl, c(library(tcltk),  # send necessary functions to the cluster
 
 ## call main function ----
 
-foreach(i = 1:120) %dopar% {  # loop for parallel processing
+foreach(i = 1:60) %dopar% {  # loop for parallel processing
   main_fn(iter_num = (iter_num+i), # ID number for dataset
          dir_name = dir_name, # name of directory to save the dataset(s)
          popvar = gr_sd_vec_a, # variance in mean growth rate
@@ -484,7 +483,7 @@ stopCluster(cl) # stop the cluster
 
 ## set parameters ----
 
-iter_num <- 82600
+iter_num <- 82300
 gr_mean_a <- 0
 gr_sd_vec_a <- 0.3
 sd_mean <- 0.4
@@ -493,10 +492,10 @@ mlength_ <- 20
 numobs_ <- ceiling(0.5*mlength_)
 samp_size_ <- 500
 tmax <- 50
-tpops <- rep(c(500, 1000, 2000, 5000, 10000), each=20)
+tpops <- rep(c(500, 1000, 2000, 5000, 10000), each=10)
 mean_cv <- 0.15
 cv_sd <- 0.1
-dir_name <- "TestData2/DSSize"
+dir_name <- "TestData/DSSize"
 
 if(!dir.exists(paste(dir_name, "/", sep=""))) {dir.create(paste(dir_name, "/", sep=""))} # create directory
 
@@ -513,7 +512,7 @@ clusterEvalQ(cl, c(library(tcltk),  # send necessary functions to the cluster
 
 ## call main function ----
 
-foreach(i = 1:100) %dopar% {  # loop for parallel processing
+foreach(i = 1:50) %dopar% {  # loop for parallel processing
   main_fn(iter_num = (iter_num+i), # ID number for dataset
          dir_name = dir_name, # name of directory to save the dataset(s)
          popvar = gr_sd_vec_a, # variance in mean growth rate
@@ -816,18 +815,18 @@ stopCluster(cl) # stop the cluster
 
 iter_num <- 85000
 gr_mean_a <- 0
-gr_sd_vec_a <- 0.2
-sd_mean <- 0.2
+gr_sd_vec_a <- 0.3
+sd_mean <- 0.4
 popspec <- 10
 mlength_ <- 14
 numobs_ <- ceiling(0.5*mlength_)
-samp_size_ <- rep(c(200, 200, 200, 400), each=50)
+samp_size_ <- rep(c(200, 200, 200, 400), each=20)
 tmax <- 50
 tpops <- 1000
 mean_cv <- 0.15
 cv_sd <- 0.1
-d_method <- rep(c("normal", "clustend", "endreveal", "normal"), each=50) # degradation method
-ep_ratio <- rep(c(1, 0.2, 1, 1), each=50) # endpops ratio (portion to apply "clustend" to)
+d_method <- rep(c("normal", "clustend", "endreveal", "normal"), each=20) # degradation method
+ep_ratio <- rep(c(1, 0.2, 1, 1), each=20) # endpops ratio (portion to apply "clustend" to)
 dir_name <- "TestData/Solutions"
 
 if(!dir.exists(paste(dir_name, "/", sep=""))) {dir.create(paste(dir_name, "/", sep=""))} # create directory
@@ -847,7 +846,7 @@ clusterEvalQ(cl, c(library(tcltk),  # send necessary functions to the cluster
 
 ## call main function ----
 
-foreach(i = 1:200) %dopar% {  # loop for parallel processing
+foreach(i = 1:80) %dopar% {  # loop for parallel processing
   main_fn(iter_num = (iter_num+i), # ID number for dataset
          dir_name = dir_name, # name of directory to save the dataset(s)
          popvar = gr_sd_vec_a, # variance in mean growth rate

@@ -156,7 +156,47 @@ ggplot(trendlength, aes(x=TotalYears, y=TrendDev))+
 ggsave(paste(pd_name, "/", "trendlength.tiff", sep=""),
        device = tiff,
        dpi = 1000,
-       compression = "lzw")
+       compression = "lzw",
+       width = 10000,
+       height = 5000,
+       units = "px")
+
+
+###################
+# Observation Error
+###################
+
+# test directory path
+dir_name <- "TestData/ObsError" # directory containing the data to analyze
+
+# get results
+obserror <- gather_results_fn(dir_name)[[2]]
+
+obserror$ObsError <- rep(c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 2), each=20)
+
+obserror$ObsError <- factor(obserror$ObsError)
+
+ggplot(obserror, aes(x=ObsError, y=TrendDev))+
+  geom_boxplot(show.legend=FALSE, fill="skyblue")+
+  scale_x_discrete(labels=c("0%", "10%", "20%", "40%", "60%", "80%", "100%", "200%"))+
+  ylim(c(0,0.5))+
+  ylab("Trend Deviation Value")+
+  xlab("Percent Observation Error")+
+  theme_bw()+
+  theme(axis.title.x=element_text(size=16),
+        axis.title.y=element_text(size=16),
+        axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(size = 16, hjust = 0.5),
+        panel.background = element_rect(fill="white"))
+
+ggsave(paste(pd_name, "/", "observationerror.tiff", sep=""),
+       device = tiff,
+       dpi = 1000,
+       compression = "lzw",
+       width = 10000,
+       height = 5000,
+       units = "px")
 
 
 #########################
@@ -235,24 +275,6 @@ ppsplot <- annotate_figure(ppsplot,
                                   hjust = 0.5,
                                   gp = gpar(cex = 1.3)))
 
-ggsave(paste(pd_name, "/", "popsperspec_normal.tiff", sep=""),
-       plot = pps_norm_plot,
-       device = tiff,
-       dpi = 1000,
-       compression = "lzw")
-
-ggsave(paste(pd_name, "/", "popsperspec_exponential.tiff", sep=""),
-       device = tiff,
-       plot = pps_exp_plot,
-       dpi = 1000,
-       compression = "lzw")
-
-ggsave(paste(pd_name, "/", "popsperspec_negbin.tiff", sep=""),
-       plot = pps_nb_plot,
-       device = tiff,
-       dpi = 1000,
-       compression = "lzw")
-
 ggsave(paste(pd_name, "/", "popsperspec_all.tiff", sep=""),
        plot = ppsplot,
        device = tiff,
@@ -261,6 +283,7 @@ ggsave(paste(pd_name, "/", "popsperspec_all.tiff", sep=""),
        width = 9000,
        height = 3000,
        units = "px")
+
 
 ########################
 # Timepoint Distribution
@@ -385,67 +408,8 @@ dsplot <- annotate_figure(dsplot,
                                   hjust = 0.5,
                                   gp = gpar(cex = 1.3)))
 
-
-ggsave(paste(pd_name, "/", "totalpops50.tiff", sep=""),
-       plot=ds50,
-       device = tiff,
-       dpi = 1000,
-       compression = "lzw")
-
-ggsave(paste(pd_name, "/", "totalpops100.tiff", sep=""),
-       plot=ds100,
-       device = tiff,
-       dpi = 1000,
-       compression = "lzw")
-
-ggsave(paste(pd_name, "/", "totalpops200.tiff", sep=""),
-       plot=ds200,
-       device = tiff,
-       dpi = 1000,
-       compression = "lzw")
-
-ggsave(paste(pd_name, "/", "totalpops500.tiff", sep=""),
-       plot=ds500,
-       device = tiff,
-       dpi = 1000,
-       compression = "lzw")
-
 ggsave(paste(pd_name, "/", "totalpopsall.tiff", sep=""),
        plot=dsplot,
-       device = tiff,
-       dpi = 1000,
-       compression = "lzw")
-
-
-###################
-# Observation Error
-###################
-
-# test directory path
-dir_name <- "TestData/ObsError" # directory containing the data to analyze
-
-# get results
-obserror <- gather_results_fn(dir_name)[[2]]
-
-obserror$ObsError <- rep(c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 2), each=20)
-
-obserror$ObsError <- factor(obserror$ObsError)
-
-ggplot(obserror, aes(x=ObsError, y=TrendDev))+
-  geom_boxplot(show.legend=FALSE, fill="skyblue")+
-  scale_x_discrete(labels=c("0%", "10%", "20%", "40%", "60%", "80%", "100%", "200%"))+
-  ylim(c(0,1))+
-  ylab("Trend Deviation Value")+
-  xlab("Percent Observation Error")+
-  theme_bw()+
-  theme(axis.title.x=element_text(size=16),
-        axis.title.y=element_text(size=16),
-        axis.text.x = element_text(size = 14),
-        axis.text.y = element_text(size = 14),
-        plot.title = element_text(size = 16, hjust = 0.5),
-        panel.background = element_rect(fill="white"))
-
-ggsave(paste(pd_name, "/", "observationerror.tiff", sep=""),
        device = tiff,
        dpi = 1000,
        compression = "lzw",
@@ -464,8 +428,8 @@ dir_name <- "TestData/Solutions" # directory containing the data to analyze
 # get results
 solutions <- gather_results_fn(dir_name)[[2]]
 
-solutions$ep_ratio <- rep(c(1, 0.2, 1, 1), each=50)
-solutions$group <- rep(c("Control", "Group A", "Group B", "Group C"), each=50)
+solutions$ep_ratio <- rep(c(1, 0.2, 1, 1), each=20)
+solutions$group <- rep(c("Control", "Group A", "Group B", "Group C"), each=20)
 
 solutions$group <- factor(solutions$group, 
                                levels=c("Control", "Group A", "Group B", "Group C"),
@@ -473,6 +437,7 @@ solutions$group <- factor(solutions$group,
 
 ggplot(solutions, aes(x=group, y=TrendDev, fill=factor(group)))+
   geom_boxplot(show.legend=FALSE)+
+  ylim(c(0,0.6))+
   ylab("TDV")+
   xlab("")+
   theme_bw()+
