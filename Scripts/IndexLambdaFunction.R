@@ -2,7 +2,7 @@
 ### Author: Shawn Dove
 ######################
 
-# Function to generate and plot a trend from a dataset using the LPI's lambda method
+# Function to generate a trend from a dataset using the LPI's lambda method
 #
 # This function has 8 arguments, explained below. It is intended to be called by 
 # MainFunction.R, therefore arguments should be supplied by MainFunction.R.
@@ -129,98 +129,6 @@ indexlambda_fn <- function(dataset,
   
   mean.trend.dev <- mean(trend.dev.matrix, na.rm=TRUE)
   write.csv(mean.trend.dev, file=paste(dir_name, "/", iter_num, "/saved_synth_", iter_num, "_trend_dev_sampled_mean.csv", sep=""))
-  
-  # plot trend
-  plot_msi <- msi_final
-  plot_ci <- msi_ci_final
-  
-  # open a png file to save the plot to
-  png(file=paste(dir_name, "/", iter_num, "/saved_synth_", iter_num, "_msi.png", sep=""),
-      width = 1280, height = 720, units = "px", pointsize = 12, bg = "white")
-  
-  # build the plot
-  par(mar=c(6,6,6,2) + 0.1)
-  plot(m_colnames, plot_msi, xlab="", ylab="", type="l", lty=1,  ylim=c(max(c(0, min(plot_ci, na.rm=TRUE)-10)), max(plot_ci, na.rm=TRUE)+10), lwd=3, frame.plot=TRUE,
-       cex.lab=1.5, cex.axis=1.5,
-       panel.first = polygon(c(min(m_colnames):max(m_colnames), max(m_colnames):min(m_colnames)), c(plot_ci[2,], rev(plot_ci[1,])), col="grey90", border = NA))
-  lines(m_colnames, plot_ci[2,], lty=2, lwd=2)
-  lines(m_colnames, plot_ci[1,], lty=2, lwd=2)
-  grid(col="grey85", lty=2)
-  mtext(text = "Year", side = 1, line = 4, cex = 1.5)
-  mtext(text = "Index", side = 2, line = 3.5, cex = 1.5)
-  
-  dev.off() # close the png file
-  
-  # plot trend with true trend
-  plot_msi <- msi_final
-  plot_ci <- msi_ci_final
-  
-  # open png file
-  png(file=paste(dir_name, "/", iter_num, "/saved_synth_", iter_num, "_msi_with_true.png", sep=""),
-      width = 1280, height = 720, units = "px", pointsize = 12, bg = "white")
-  
-  # build plot
-  par(mar=c(6,6,6,2) + 0.1)
-  plot(m_colnames, plot_msi, xlab="", ylab="", type="l", lty=1,  ylim=c(max(c(0, min(plot_ci, na.rm=TRUE)-10)), max(plot_ci, na.rm=TRUE)+10), lwd=3, frame.plot=TRUE,
-       cex.lab=1.5, cex.axis=1.5,
-       panel.first = polygon(c(min(m_colnames):max(m_colnames), max(m_colnames):min(m_colnames)), c(plot_ci[2,], rev(plot_ci[1,])), col="grey90", border = NA))
-  lines(m_colnames, plot_ci[2,], lty=2, lwd=2)
-  lines(m_colnames, plot_ci[1,], lty=2, lwd=2)
-  lines(m_colnames, true_trend, lty=1, lwd=3, col="red")
-  grid(col="grey85", lty=2)
-  mtext(text = "Year", side = 1, line = 4, cex = 1.5)
-  mtext(text = "Index", side = 2, line = 3.5, cex = 1.5)
-  
-  dev.off() # close png file
-  
-  #plot sampled trends
-  for (i in 1:resamp_size) {
-    
-    plot_msi <- msi_final_samp_list[[i]]
-    plot_ci <- msi_ci_list[[i]]
-    
-    # create a directory to store the file (if it does not exist)
-    dir.create(paste(dir_name, "/", iter_num, "/Samp_Graphs_", iter_num, sep=""))
-    
-    # open a png file to save the plot to
-    png(file=paste(dir_name, "/", iter_num, "/Samp_Graphs_", iter_num, "/saved_synth_", iter_num, "_msi_samp_", samp_size, "_", i, ".png", sep=""),
-        width = 1280, height = 720, units = "px", pointsize = 12, bg = "white")
-    
-    # build the plot
-    par(mar=c(6,6,6,2) + 0.1)
-    plot(m_colnames, plot_msi, xlab="", ylab="", type="l", lty=1,  ylim=c(max(c(0, min(plot_ci, na.rm=TRUE)-10)), max(plot_ci, na.rm=TRUE)+10), lwd=3, frame.plot=TRUE,
-         cex.lab=1.5, cex.axis=1.5,
-         panel.first = polygon(c(min(m_colnames):max(m_colnames), max(m_colnames):min(m_colnames)), c(plot_ci[2,], rev(plot_ci[1,])), col="grey90", border = NA))
-    lines(m_colnames, plot_ci[2,], lty=2, lwd=2)
-    lines(m_colnames, plot_ci[1,], lty=2, lwd=2)
-    grid(col="grey85", lty=2)
-    mtext(text = "Year", side = 1, line = 4, cex = 1.5)
-    mtext(text = "Index", side = 2, line = 3.5, cex = 1.5)
-    
-    dev.off() # close the png file
-    
-    
-    # plot sample trends with true trend
-    
-    # open png file
-    png(file=paste(dir_name, "/", iter_num, "/Samp_Graphs_", iter_num, "/saved_synth_", iter_num, "_msi_samp_vs_full_", samp_size, "_", i, ".png", sep=""),
-        width = 1280, height = 720, units = "px", pointsize = 12, bg = "white")
-    
-    # build plot
-    par(mar=c(6,6,6,2) + 0.1)
-    plot(m_colnames, plot_msi, xlab="", ylab="", type="l", lty=1,  ylim=c(max(c(0, min(plot_ci, na.rm=TRUE)-10)), max(plot_ci, na.rm=TRUE)+10), lwd=3, frame.plot=TRUE,
-         cex.lab=1.5, cex.axis=1.5,
-         panel.first = polygon(c(min(m_colnames):max(m_colnames), max(m_colnames):min(m_colnames)), c(plot_ci[2,], rev(plot_ci[1,])), col="grey90", border = NA))
-    lines(m_colnames, plot_ci[2,], lty=2, lwd=2)
-    lines(m_colnames, plot_ci[1,], lty=2, lwd=2)
-    lines(m_colnames, true_trend, lty=1, lwd=3, col="red")
-    grid(col="grey85", lty=2)
-    mtext(text = "Year", side = 1, line = 4, cex = 1.5)
-    mtext(text = "Index", side = 2, line = 3.5, cex = 1.5)
-    
-    dev.off() # close png file
-    
-  }
   
   # garbage cleaning
   gc()
