@@ -157,8 +157,8 @@ ggsave(paste(pd_name, "/", "trendlength.tiff", sep=""),
        device = tiff,
        dpi = 1000,
        compression = "lzw",
-       width = 10000,
-       height = 5000,
+       width = 5000,
+       height = 3000,
        units = "px")
 
 
@@ -194,8 +194,8 @@ ggsave(paste(pd_name, "/", "observationerror.tiff", sep=""),
        device = tiff,
        dpi = 1000,
        compression = "lzw",
-       width = 10000,
-       height = 5000,
+       width = 5000,
+       height = 3000,
        units = "px")
 
 
@@ -280,8 +280,8 @@ ggsave(paste(pd_name, "/", "popsperspec_all.tiff", sep=""),
        device = tiff,
        dpi = 1000,
        compression = "lzw",
-       width = 9000,
-       height = 3000,
+       width = 5000,
+       height = 1500,
        units = "px")
 
 
@@ -293,7 +293,7 @@ ggsave(paste(pd_name, "/", "popsperspec_all.tiff", sep=""),
 dir_name <- "TestData/TPDist" # directory containing the data to analyze
 
 # get results
-tpdist <- datacompile_fn(dir_name)[[2]]
+tpdist <- gather_results_fn(dir_name)[[2]]
 
 tpdist$DegradeType <- factor(tpdist$DegradeType)
 
@@ -316,8 +316,8 @@ ggsave(paste(pd_name, "/", "timepointdistribution.tiff", sep=""),
        device = tiff,
        dpi = 1000,
        compression = "lzw",
-       width = 9000,
-       height = 4000,
+       width = 5000,
+       height = 3000,
        units = "px")
 
 
@@ -413,8 +413,8 @@ ggsave(paste(pd_name, "/", "totalpopsall.tiff", sep=""),
        device = tiff,
        dpi = 1000,
        compression = "lzw",
-       width = 10000,
-       height = 5000,
+       width = 5000,
+       height = 3000,
        units = "px")
 
 
@@ -451,4 +451,7 @@ ggplot(solutions, aes(x=group, y=TrendDev, fill=factor(group)))+
 ggsave(paste(pd_name, "/", "solutions.tiff", sep=""),
        device = tiff,
        dpi = 1000,
-       compression = "lzw")
+       compression = "lzw",
+       width = 5000,
+       height = 3000,
+       units = "px")

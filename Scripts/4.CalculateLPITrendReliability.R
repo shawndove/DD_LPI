@@ -154,7 +154,7 @@ sys_list <- rep(unique(sys_IDs), each=length(unique(tax_group_IDs)) * length(uni
 ####
 
 # create subset of LPD columns with only count data
-LPI_trimmed <- LPI_full[,grep("(\\d)", names(LPI_full))]
+LPI_trimmed <- LPI_full[,grep("X\\d", names(LPI_full))]
 
 # convert to numeric data (ignore warnings)
 LPI_trimmed <- as.data.frame(sapply(LPI_trimmed, as.numeric))
@@ -442,8 +442,8 @@ ggplot(data = obsyeardf, aes(x=Year, y=Obs))+
 ggsave(paste(pd_name, "/observations_per_year_update.tiff", sep=""),
        plot = last_plot(),
        device = "tiff",
-       width = 12000,
-       height = 8000,
+       width = 5000,
+       height = 3000,
        units = "px",
        dpi = 1000,
        compression = "lzw")

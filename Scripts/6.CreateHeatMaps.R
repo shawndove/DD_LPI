@@ -111,11 +111,11 @@ p_all
 
 # save plot
 
-ggsave(filename=paste(pd_name, "/heatmap_update.tiff", sep=""),
+ggsave(filename=paste(pd_name, "/heatmap.tiff", sep=""),
        plot = last_plot(),
        device = "tiff",
-       width = 10000,
-       height = 8000,
+       width = 5000,
+       height = 4000,
        units = "px",
        dpi = 1000,
        compression = "lzw")
@@ -144,11 +144,11 @@ ggplot(data = realms.results.df[!is.na(realms.results.df$SampPercent100) & realm
 
 # save plot
 
-ggsave(filename=paste(pd_name, "/reliability_vs_weight_update2.tiff", sep=""),
+ggsave(filename=paste(pd_name, "/reliability_vs_weight.tiff", sep=""),
        plot = last_plot(),
        device = "tiff",
-       width = 12000,
-       height = 8000,
+       width = 5000,
+       height = 3000,
        units = "px",
        dpi = 1000,
        compression = "lzw")

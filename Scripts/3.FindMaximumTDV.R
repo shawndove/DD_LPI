@@ -258,7 +258,7 @@ ggplot(td90_tempdf, aes(x=ss, y=td90))+
 ggsave(filename=paste(pd_name, "/", "TDV_curve.tiff", sep=""),
        plot=last_plot(),
        dpi=1000,
-       height=5000,
-       width=8000,
+       width=5000,
+       height=3000,
        units="px",
        compression="lzw")
